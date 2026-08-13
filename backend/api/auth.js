@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 
 module.exports = async (req, res) => {
+  // Настройка CORS для связи с GitHub Pages
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -16,15 +17,14 @@ module.exports = async (req, res) => {
   const { initData } = req.body;
   const botToken = process.env.BOT_TOKEN;
 
-  // Считываем списки разрешенных ID из настроек Vercel (разделенные запятыми)
-  const allowedChats = (process.env.ALLOWED_CHAT_IDS || '').split(',').map(id => id.trim());
+  // Получаем список разрешенных ID из настроек Vercel
   const allowedUsers = (process.env.ALLOWED_USER_IDS || '').split(',').map(id => id.trim());
 
   if (!initData || !botToken) {
     return res.status(400).json({ error: 'Missing parameters' });
   }
 
-  // 1. Валидация подписи Telegram
+  // 1. Валидация подписи Telegram (проверка, что данные не подделаны)
   const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
   const urlParams = new URLSearchParams(initData);
   const hash = urlParams.get('hash');
@@ -41,29 +41,19 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: 'Криптографическая проверка не пройдена' });
   }
 
-  // Получаем данные пользователя и контекст чата
-  const chatParam = urlParams.get('chat');
+  // 2. Проверка личного Telegram ID пользователя
   const userParam = urlParams.get('user');
-  
-  const user = userParam ? JSON.parse(userParam) : null;
-  const chat = chatParam ? JSON.parse(chatParam) : null;
-
-  // 2. Логика проверки белого списка (Пропускаем, если совпал чат ИЛИ если пользователь в списке)
-  let isAccessGranted = false;
-
-  // Проверка по ID чата (если запуск из группы)
-  if (chat && allowedChats.includes(String(chat.id))) {
-    isAccessGranted = true;
+  if (!userParam) {
+    return res.status(400).json({ error: 'Данные пользователя отсутствуют' });
   }
 
-  // Проверка по личному ID пользователя (если запуск из лички/профиля)
-  if (user && allowedUsers.includes(String(user.id))) {
-    isAccessGranted = true;
+  const user = JSON.parse(userParam);
+
+  // Проверяем, есть ли ID зашедшего человека в нашем списке в Vercel
+  if (!allowedUsers.includes(String(user.id))) {
+    return res.status(403).json({ error: 'Доступ ограничен. Вашего Telegram ID нет в белом списке.' });
   }
 
-  if (!isAccessGranted) {
-    return res.status(403).json({ error: 'Доступ ограничен. Вас или вашего чата нет в белом списке.' });
-  }
-
+  // Если пользователь прошел проверку
   return res.status(200).json({ success: true });
 };
