@@ -179,15 +179,51 @@
 
     let currentUserName = "Тестовый Юзер";
 
-    function checkAuth() {
-      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    async function checkAuth() {
+      document.getElementById('user-greeting').innerText = "Проверка доступа...";
+      
+      if (!tg || !tg.initData) {
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('auth-error').innerHTML = "<h2>Ошибка доступа</h2><p>Приложение можно запустить только внутри рабочего чата Telegram.</p>";
+        document.getElementById('auth-error').style.display = 'block';
+        return;
+      }
+
+      if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const u = tg.initDataUnsafe.user;
         currentUserName = u.first_name || u.username || "Пользователь";
       }
-      
-      document.getElementById('user-greeting').innerText = "Привет, " + currentUserName + "!";
-      renderBoard();
+
+      try {
+        const response = await fetch('https://vercel.app', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ initData: tg.initData })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          // ИСПРАВЛЕНО: Теперь имя гарантированно подставляется при успешной авторизации
+          document.getElementById('user-greeting').innerText = "Привет, " + currentUserName + "!";
+          document.getElementById('app').style.display = 'block';
+          document.getElementById('auth-error').style.display = 'none';
+          renderBoard();
+        } else {
+          document.getElementById('app').style.display = 'none';
+          document.getElementById('auth-error').innerHTML = "<h2>Доступ ограничен</h2><p>" + (result.error || "У вас нет прав доступа к этой панели.") + "</p>";
+          document.getElementById('auth-error').style.display = 'block';
+        }
+      } catch (error) {
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('auth-error').innerHTML = "<h2>Ошибка сервера</h2><p>Не удалось связаться с сервером авторизации.</p>";
+        document.getElementById('auth-error').style.display = 'block';
+        console.error("Auth error:", error);
+      }
     }
+
 
     function renderBoard() {
       const columns = { todo: [], progress: [], done: [] };
