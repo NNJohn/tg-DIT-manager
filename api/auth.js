@@ -153,8 +153,13 @@ module.exports = async (req, res) => {
     }
 
     return res.status(400).json({ error: 'Некорректный метод или действие.' });
-  } catch (err) {
-    console.error('SERVER ERROR:', err);
-    return res.status(500).json({ error: 'Внутренняя ошибка сервера или базы данных.' });
+ } catch (err) {
+    console.error('SERVER ERROR LOG:', err);
+    
+    // ИСПРАВЛЕНО: Бэкенд теперь честно скажет фронтенду, на чем споткнулся Google
+    const errorMessage = err.message || 'Неизвестная ошибка сервера.';
+    return res.status(500).json({ 
+      error: 'Ошибка: ' + errorMessage 
+    });
   }
 };
