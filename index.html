@@ -1,24 +1,183 @@
-    // БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ: проверяем, существует ли Telegram
-    const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telegram Kanban MVP</title>
+  <!-- Подключаем Telegram SDK -->
+  <script src="https://telegram.org"></script>
+  <!-- Подключаем Excel SDK -->
+  <script src="https://jsdelivr.net"></script>
+  <style>
+    :root {
+      --tg-theme-bg-color: #ffffff;
+      --tg-theme-text-color: #000000;
+      --tg-theme-hint-color: #707579;
+      --tg-theme-button-color: #2481cc;
+      --tg-theme-button-text-color: #ffffff;
+      --tg-theme-secondary-bg-color: #f4f4f5;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--tg-theme-secondary-bg-color);
+      color: var(--tg-theme-text-color);
+      margin: 0;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    h2 { margin: 0; font-size: 1.2rem; }
+    button {
+      background-color: var(--tg-theme-button-color);
+      color: var(--tg-theme-button-text-color);
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .board {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .column {
+      background-color: var(--tg-theme-bg-color);
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .column-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      padding-bottom: 5px;
+      border-bottom: 2px solid var(--tg-theme-secondary-bg-color);
+    }
+    .task-list {
+      min-height: 50px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .task-card {
+      background-color: var(--tg-theme-secondary-bg-color);
+      padding: 10px;
+      border-radius: 8px;
+      border-left: 5px solid #ccc;
+      cursor: grab;
+    }
+    .task-card.priority-high { border-left-color: #e53935; }
+    .task-card.priority-medium { border-left-color: #ffb300; }
+    .task-card.priority-low { border-left-color: #4caf50; }
+    
+    .task-text { font-weight: 500; margin-bottom: 5px; }
+    .task-meta { font-size: 0.8rem; color: var(--tg-theme-hint-color); }
+    
+    .form-container {
+      background-color: var(--tg-theme-bg-color);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .form-container input, .form-container select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+    #auth-error {
+      display: none;
+      text-align: center;
+      padding: 50px 20px;
+    }
+    #app {
+      display: block; /* По умолчанию показываем интерфейс для тестов */
+    }
+  </style>
+</head>
+<body>
+
+  <div id="auth-error">
+    <h2>Доступ ограничен</h2>
+    <p>Вашего Telegram ID нет в белом списке этой системы менеджмента.</p>
+  </div>
+
+  <div id="app">
+    <header>
+      <h2 id="user-greeting">Привет, Пользователь!</h2>
+      <div style="display:flex; gap:5px;">
+        <button onclick="toggleForm()">+ Задача</button>
+        <button onclick="exportToExcel()" style="background-color: #2e7d32;">Excel</button>
+      </div>
+    </header>
+
+    <div id="task-form" class="form-container">
+      <input type="text" id="form-text" placeholder="Текст задачи" required>
+      <input type="text" id="form-executor" placeholder="Исполнитель">
+      <input type="date" id="form-deadline">
+      <select id="form-priority">
+        <option value="low">Низкий приоритет</option>
+        <option value="medium" selected>Средний приоритет</option>
+        <option value="high">Высокий приоритет</option>
+      </select>
+      <button onclick="addTask()">Сохранить задачу</button>
+    </div>
+
+    <div class="board">
+      <div class="column" ondragover="allowDrop(event)" ondrop="drop(event, 'todo')">
+        <div class="column-title">Надо сделать</div>
+        <div id="todo" class="task-list"></div>
+      </div>
+      
+      <div class="column" ondragover="allowDrop(event)" ondrop="drop(event, 'progress')">
+        <div class="column-title">В работе</div>
+        <div id="progress" class="task-list"></div>
+      </div>
+      
+      <div class="column" ondragover="allowDrop(event)" ondrop="drop(event, 'done')">
+        <div class="column-title">Готово</div>
+        <div id="done" class="task-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Проверяем наличие Telegram WebApp строго через безопасное условие
+    const hasTelegram = typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp;
+    const tg = hasTelegram ? window.Telegram.WebApp : null;
 
     if (tg) {
-      tg.ready();
-      tg.expand(); // Расширяем приложение на весь экран в Telegram
-    } else {
-      console.warn("Приложение запущено вне Telegram. Включен режим симуляции.");
+      try {
+        tg.ready();
+        tg.expand();
+      } catch (e) {
+        console.error("Ошибка инициализации Telegram SDK:", e);
+      }
     }
 
-    // Безопасная настройка цветов темы (с дефолтными значениями для обычного браузера)
-    const getThemeParam = (param, fallback) => (tg && tg.themeParams && tg.themeParams[param]) ? tg.themeParams[param] : fallback;
+    // Безопасное накатывание тем оформления
+    try {
+      const getParam = (name, fallback) => (tg && tg.themeParams && tg.themeParams[name]) ? tg.themeParams[name] : fallback;
+      document.documentElement.style.setProperty('--tg-theme-bg-color', getParam('bg_color', '#ffffff'));
+      document.documentElement.style.setProperty('--tg-theme-text-color', getParam('text_color', '#000000'));
+      document.documentElement.style.setProperty('--tg-theme-hint-color', getParam('hint_color', '#707579'));
+      document.documentElement.style.setProperty('--tg-theme-button-color', getParam('button_color', '#2481cc'));
+      document.documentElement.style.setProperty('--tg-theme-button-text-color', getParam('button_text_color', '#ffffff'));
+      document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', getParam('secondary_bg_color', '#f4f4f5'));
+    } catch (err) {
+      console.warn("Не удалось применить темы Telegram:", err);
+    }
 
-    document.documentElement.style.setProperty('--tg-theme-bg-color', getThemeParam('bg_color', '#ffffff'));
-    document.documentElement.style.setProperty('--tg-theme-text-color', getThemeParam('text_color', '#000000'));
-    document.documentElement.style.setProperty('--tg-theme-hint-color', getThemeParam('hint_color', '#707579'));
-    document.documentElement.style.setProperty('--tg-theme-button-color', getThemeParam('button_color', '#2481cc'));
-    document.documentElement.style.setProperty('--tg-theme-button-text-color', getThemeParam('button_text_color', '#ffffff'));
-    document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', getThemeParam('secondary_bg_color', '#f4f4f5'));
-
-    // Локальная база данных в памяти
+    // Тестовая дата
     let tasks = [
       { id: '1', status: 'todo', text: 'Запустить MVP бота', author: 'Система', executor: 'Команда', deadline: '2026-08-20', priority: 'high' },
       { id: '2', status: 'progress', text: 'Тестирование интерфейса', author: 'Иван', executor: 'Петр', deadline: '2026-08-15', priority: 'medium' }
@@ -26,26 +185,108 @@
 
     let currentUserName = "Тестовый Юзер";
 
-    // Функция проверки авторизации
-    async function checkAuth() {
-      // Пытаемся взять пользователя из Telegram, если мы внутри мессенджера
-      const user = tg ? tg.initDataUnsafe?.user : null;
-      
-      if (user) {
-        currentUserName = user.first_name || user.username || "Пользователь";
+    function checkAuth() {
+      // Подтягиваем имя, если мы внутри реальной телеги
+      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        const u = tg.initDataUnsafe.user;
+        currentUserName = u.first_name || u.username || "Пользователь";
       }
       
       document.getElementById('user-greeting').innerText = `Привет, ${currentUserName}!`;
-
-      // НА ЭТАПЕ MVP БЕЗ БЭКЕНДА: временно пускаем всегда
-      const isAuthenticated = true; 
+      
+      // На этапе MVP временно всегда пускаем
+      const isAuthenticated = true;
 
       if (!isAuthenticated) {
-        document.getElementById('app').style.display = 'none';
+        document.getElementById('app').style.style.display = 'none';
         document.getElementById('auth-error').style.display = 'block';
       } else {
-        document.getElementById('app').style.display = 'block';
-        document.getElementById('auth-error').style.display = 'none';
         renderBoard();
       }
     }
+
+    function renderBoard() {
+      const columns = { todo: [], progress: [], done: [] };
+      tasks.forEach(t => { if (columns[t.status]) columns[t.status].push(t); });
+
+      for (let status in columns) {
+        const listEl = document.getElementById(status);
+        if (!listEl) continue;
+        listEl.innerHTML = '';
+        
+        columns[status].forEach(task => {
+          const card = document.createElement('div');
+          card.className = `task-card priority-${task.priority}`;
+          card.draggable = true;
+          card.ondragstart = (e) => e.dataTransfer.setData('text/plain', task.id);
+          
+          card.innerHTML = `
+            <div class="task-text">${task.text}</div>
+            <div class="task-meta">От: ${task.author} | Исполнитель: ${task.executor || '—'}</div>
+            <div class="task-meta">Срок: ${task.deadline || '—'}</div>
+          `;
+          listEl.appendChild(card);
+        });
+      }
+    }
+
+    function toggleForm() {
+      const form = document.getElementById('task-form');
+      form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function addTask() {
+      const text = document.getElementById('form-text').value;
+      const executor = document.getElementById('form-executor').value;
+      const deadline = document.getElementById('form-deadline').value;
+      const priority = document.getElementById('form-priority').value;
+
+      if (!text) return;
+
+      tasks.push({
+        id: Date.now().toString(),
+        status: 'todo',
+        text: text,
+        author: currentUserName,
+        executor: executor,
+        deadline: deadline,
+        priority: priority
+      });
+
+      renderBoard();
+      toggleForm();
+
+      document.getElementById('form-text').value = '';
+      document.getElementById('form-executor').value = '';
+      document.getElementById('form-deadline').value = '';
+    }
+
+    function allowDrop(e) { e.preventDefault(); }
+    
+    function drop(e, newStatus) {
+      e.preventDefault();
+      const taskId = e.dataTransfer.getData('text/plain');
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        task.status = newStatus;
+        renderBoard();
+      }
+    }
+
+    function exportToExcel() {
+      const dataToExport = tasks.map(t => ({
+        'ID Задачи': t.id,
+        'Статус': t.status === 'todo' ? 'Надо сделать' : t.status === 'progress' ? 'В работе' : 'Готово',
+        'Текст задачи': t.text,
+        'Автор': t.author,
+        'Исполнитель': t.executor || 'Не назначен',
+        'Срок выполнения': t.deadline || 'Не указан',
+        'Приоритет': t.priority.toUpperCase()
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Задачи");
+      XLSX.writeFile(workbook, "kanban_tasks.xlsx");
+    }
+
