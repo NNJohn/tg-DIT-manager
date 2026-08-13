@@ -3,7 +3,7 @@
 // ============================================================
 
 const API_URL =
-  'https://tg-dit-manager-lhpeq7ir7-dit11.vercel.app/api/auth';
+  'https://tg-dit-manager-2lb5efp2w-dit11.vercel.app/api/auth';
 
 
 // ============================================================
