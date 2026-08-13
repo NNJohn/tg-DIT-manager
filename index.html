@@ -180,36 +180,34 @@
     let currentUserName = "Тестовый Юзер";
 
     async function checkAuth() {
-      document.getElementById('user-greeting').innerText = "Проверка доступа...";
+      document.getElementById('user-greeting').innerText = "Инициализация Telegram...";
       
-      // Даем Telegram WebApp SDK одну секунду на инициализацию, если он не подгрузился мгновенно
-      const currentTg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : tg;
+      // Ждем 200мс, чтобы десктопный Telegram успел встроить WebApp SDK в страницу
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      // Проверяем наличие Telegram WebApp строго после паузы
+      const currentTg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
       
       if (!currentTg || !currentTg.initData) {
-        // Если это обычный браузер (Хром) — включаем демо-режим для тестов, чтобы вы могли кодить
-        if (typeof window !== 'undefined' && !window.location.href.includes('tgWebAppStartParam')) {
-          console.warn("Telegram не обнаружен. Включен демонстрационный режим.");
-          document.getElementById('user-greeting').innerText = "Привет, Тестовый Пользователь! (Демо)";
-          document.getElementById('app').style.display = 'block';
-          document.getElementById('auth-error').style.display = 'none';
-          renderBoard();
-          return;
-        }
-        
-        document.getElementById('app').style.display = 'none';
-        document.getElementById('auth-error').innerHTML = "<h2>Ошибка</h2><p>Пожалуйста, откройте приложение внутри мессенджера Telegram.</p>";
-        document.getElementById('auth-error').style.display = 'block';
+        // Режим симуляции ВКЛЮЧАЕТСЯ ТОЛЬКО в обычном браузере Chrome/Safari
+        console.warn("Telegram не обнаружен. Включен демонстрационный режим.");
+        document.getElementById('user-greeting').innerText = "Привет, Тестовый Пользователь! (Демо)";
+        document.getElementById('app').style.display = 'block';
+        document.getElementById('auth-error').style.display = 'none';
+        renderBoard();
         return;
       }
 
-      // Если мы внутри Telegram, берем имя из профиля
+      // Если мы внутри Telegram — берем ваше реальное имя
       if (currentTg.initDataUnsafe && currentTg.initDataUnsafe.user) {
         const u = currentTg.initDataUnsafe.user;
         currentUserName = u.first_name || u.username || "Пользователь";
       }
 
+      document.getElementById('user-greeting').innerText = "Проверка прав...";
+
       try {
-        // Отправляем данные на ваш бэкенд в Vercel
+        // Отправляем данные на ваш бэкенд на Vercel
         const response = await fetch('https://vercel.app', {
           method: 'POST',
           headers: {
@@ -221,11 +219,13 @@
         const result = await response.json();
 
         if (response.ok && result.success) {
+          // Вы успешно прошли белый список Vercel!
           document.getElementById('user-greeting').innerText = "Привет, " + currentUserName + "!";
           document.getElementById('app').style.display = 'block';
           document.getElementById('auth-error').style.display = 'none';
           renderBoard();
         } else {
+          // Если вашего ID нет в переменной ALLOWED_USER_IDS на Vercel
           document.getElementById('app').style.display = 'none';
           document.getElementById('auth-error').innerHTML = "<h2>Доступ ограничен</h2><p>" + (result.error || "Вашего Telegram ID нет в белом списке.") + "</p>";
           document.getElementById('auth-error').style.display = 'block';
