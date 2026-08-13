@@ -91,26 +91,26 @@
       border-radius: 6px;
       box-sizing: border-box;
     }
-    #auth-error {
-      display: none;
+    #auth-status-screen {
+      display: block;
       text-align: center;
       padding: 50px 20px;
     }
     #app {
-      display: block;
+      display: none;
     }
   </style>
 </head>
 <body>
 
-  <div id="auth-error">
-    <h2>Доступ ограничен</h2>
-    <p>Вашего Telegram ID нет в белом списке этой системы менеджмента.</p>
+  <div id="auth-status-screen">
+    <h2 id="status-title">Подключение к Telegram...</h2>
+    <p id="status-desc">Пожалуйста, подождите. Идет проверка учетных данных.</p>
   </div>
 
   <div id="app">
     <header>
-      <h2 id="user-greeting">Привет, Пользователь!</h2>
+      <h2 id="user-greeting">Загрузка...</h2>
       <div style="display:flex; gap:5px;">
         <button onclick="toggleForm()">+ Задача</button>
         <button onclick="exportToExcel()" style="background-color: #2e7d32;">Excel</button>
@@ -147,182 +147,7 @@
     </div>
   </div>
 
-  <script>
-    const hasTelegram = typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp;
-    const tg = hasTelegram ? window.Telegram.WebApp : null;
-
-    if (tg) {
-      try {
-        tg.ready();
-        tg.expand();
-      } catch (e) {
-        console.error(e);
-      }
-    }
-
-    try {
-      const getParam = (name, fallback) => (tg && tg.themeParams && tg.themeParams[name]) ? tg.themeParams[name] : fallback;
-      document.documentElement.style.setProperty('--tg-theme-bg-color', getParam('bg_color', '#ffffff'));
-      document.documentElement.style.setProperty('--tg-theme-text-color', getParam('text_color', '#000000'));
-      document.documentElement.style.setProperty('--tg-theme-hint-color', getParam('hint_color', '#707579'));
-      document.documentElement.style.setProperty('--tg-theme-button-color', getParam('button_color', '#2481cc'));
-      document.documentElement.style.setProperty('--tg-theme-button-text-color', getParam('button_text_color', '#ffffff'));
-      document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', getParam('secondary_bg_color', '#f4f4f5'));
-    } catch (err) {
-      console.warn(err);
-    }
-
-    let tasks = [
-      { id: '1', status: 'todo', text: 'Запустить MVP бота', author: 'Система', executor: 'Команда', deadline: '2026-08-20', priority: 'high' },
-      { id: '2', status: 'progress', text: 'Тестирование интерфейса', author: 'Иван', executor: 'Петр', deadline: '2026-08-15', priority: 'medium' }
-    ];
-
-    let currentUserName = "Тестовый Юзер";
-
-    async function checkAuth() {
-      document.getElementById('user-greeting').innerText = "Инициализация Telegram...";
-      
-      // Ждем 200мс, чтобы десктопный Telegram успел встроить WebApp SDK в страницу
-      await new Promise(resolve => setTimeout(resolve, 200));
-
-      // Проверяем наличие Telegram WebApp строго после паузы
-      const currentTg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-      
-      if (!currentTg || !currentTg.initData) {
-        // Режим симуляции ВКЛЮЧАЕТСЯ ТОЛЬКО в обычном браузере Chrome/Safari
-        console.warn("Telegram не обнаружен. Включен демонстрационный режим.");
-        document.getElementById('user-greeting').innerText = "Привет, Тестовый Пользователь! (Демо)";
-        document.getElementById('app').style.display = 'block';
-        document.getElementById('auth-error').style.display = 'none';
-        renderBoard();
-        return;
-      }
-
-      // Если мы внутри Telegram — берем ваше реальное имя
-      if (currentTg.initDataUnsafe && currentTg.initDataUnsafe.user) {
-        const u = currentTg.initDataUnsafe.user;
-        currentUserName = u.first_name || u.username || "Пользователь";
-      }
-
-      document.getElementById('user-greeting').innerText = "Проверка прав...";
-
-      try {
-        // Отправляем данные на ваш бэкенд на Vercel
-        const response = await fetch('https://vercel.app', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ initData: currentTg.initData })
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.success) {
-          // Вы успешно прошли белый список Vercel!
-          document.getElementById('user-greeting').innerText = "Привет, " + currentUserName + "!";
-          document.getElementById('app').style.display = 'block';
-          document.getElementById('auth-error').style.display = 'none';
-          renderBoard();
-        } else {
-          // Если вашего ID нет в переменной ALLOWED_USER_IDS на Vercel
-          document.getElementById('app').style.display = 'none';
-          document.getElementById('auth-error').innerHTML = "<h2>Доступ ограничен</h2><p>" + (result.error || "Вашего Telegram ID нет в белом списке.") + "</p>";
-          document.getElementById('auth-error').style.display = 'block';
-        }
-      } catch (error) {
-        document.getElementById('app').style.display = 'none';
-        document.getElementById('auth-error').innerHTML = "<h2>Ошибка сервера</h2><p>Не удалось связаться с сервером авторизации.</p>";
-        document.getElementById('auth-error').style.display = 'block';
-        console.error("Auth error:", error);
-      }
-    }
-
-
-    function renderBoard() {
-      const columns = { todo: [], progress: [], done: [] };
-      tasks.forEach(t => { if (columns[t.status]) columns[t.status].push(t); });
-
-      for (let status in columns) {
-        const listEl = document.getElementById(status);
-        if (!listEl) continue;
-        listEl.innerHTML = '';
-        
-        columns[status].forEach(task => {
-          const card = document.createElement('div');
-          card.className = "task-card priority-" + task.priority;
-          card.draggable = true;
-          card.ondragstart = (e) => e.dataTransfer.setData('text/plain', task.id);
-          
-          card.innerHTML = '<div class="task-text">' + task.text + '</div>' +
-                           '<div class="task-meta">От: ' + task.author + ' | Исполнитель: ' + (task.executor || '—') + '</div>' +
-                           '<div class="task-meta">Срок: ' + (task.deadline || '—') + '</div>';
-          listEl.appendChild(card);
-        });
-      }
-    }
-
-    function toggleForm() {
-      const form = document.getElementById('task-form');
-      form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
-    }
-
-    function addTask() {
-      const text = document.getElementById('form-text').value;
-      const executor = document.getElementById('form-executor').value;
-      const deadline = document.getElementById('form-deadline').value;
-      const priority = document.getElementById('form-priority').value;
-
-      if (!text) return;
-
-      tasks.push({
-        id: Date.now().toString(),
-        status: 'todo',
-        text: text,
-        author: currentUserName,
-        executor: executor,
-        deadline: deadline,
-        priority: priority
-      });
-
-      renderBoard();
-      toggleForm();
-
-      document.getElementById('form-text').value = '';
-      document.getElementById('form-executor').value = '';
-      document.getElementById('form-deadline').value = '';
-    }
-
-    function allowDrop(e) { e.preventDefault(); }
-    
-    function drop(e, newStatus) {
-      e.preventDefault();
-      const taskId = e.dataTransfer.getData('text/plain');
-      const task = tasks.find(t => t.id === taskId);
-      if (task) {
-        task.status = newStatus;
-        renderBoard();
-      }
-    }
-
-    function exportToExcel() {
-      const dataToExport = tasks.map(t => ({
-        'ID Задачи': t.id,
-        'Статус': t.status === 'todo' ? 'Надо сделать' : t.status === 'progress' ? 'В работе' : 'Готово',
-        'Текст задачи': t.text,
-        'Автор': t.author,
-        'Исполнитель': t.executor || 'Не назначен',
-        'Срок выполнения': t.deadline || 'Не указан',
-        'Приоритет': t.priority.toUpperCase()
-      }));
-
-      const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Задачи");
-      XLSX.writeFile(workbook, "kanban_tasks.xlsx");
-    }
-
-    checkAuth();
-  </script>
+  <!-- Подключаем наш скрипт из отдельного файла -->
+  <script src="script.js"></script>
 </body>
 </html>
