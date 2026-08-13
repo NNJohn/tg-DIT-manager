@@ -1,13 +1,8 @@
-alert('НОВЫЙ SCRIPT.JS — 13.08.2026');
 // ============================================================
 // Pocket Jira — Telegram Mini App
 // ============================================================
 
 const API_URL = '/api/auth';
-
-// ============================================================
-// Данные MVP
-// ============================================================
 
 let tasks = [
   {
@@ -31,11 +26,6 @@ let tasks = [
 ];
 
 let currentUserName = 'Пользователь';
-
-
-// ============================================================
-// Telegram
-// ============================================================
 
 const tg =
   window.Telegram && window.Telegram.WebApp
@@ -111,7 +101,7 @@ function applyTelegramTheme() {
 
 
 // ============================================================
-// Получение имени из Telegram
+// Telegram user
 // ============================================================
 
 function getTelegramUser() {
@@ -124,7 +114,7 @@ function getTelegramUser() {
 
 
 // ============================================================
-// Авторизация через Vercel
+// Авторизация
 // ============================================================
 
 async function authorize() {
@@ -155,61 +145,85 @@ async function authorize() {
 
 
   try {
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      initData: tg.initData
-    })
-  });
 
-  const responseText = await response.text();
+    const response = await fetch(API_URL, {
+      method: 'POST',
 
-  console.log('AUTH STATUS:', response.status);
-  console.log('AUTH RESPONSE:', responseText);
+      headers: {
+        'Content-Type': 'application/json'
+      },
 
-  let result;
+      body: JSON.stringify({
+        initData: tg.initData
+      })
+    });
 
-  try {
-    result = JSON.parse(responseText);
-  } catch (e) {
-    throw new Error(
-      `Сервер вернул не JSON. HTTP ${response.status}. Ответ: ${responseText.substring(0, 300)}`
+
+    const responseText = await response.text();
+
+    console.log(
+      'AUTH STATUS:',
+      response.status
     );
-  }
 
-  if (!response.ok || !result.success) {
+    console.log(
+      'AUTH RESPONSE:',
+      responseText
+    );
+
+
+    let result;
+
+    try {
+      result = JSON.parse(responseText);
+    } catch (e) {
+      throw new Error(
+        'Сервер вернул некорректный ответ. HTTP ' +
+        response.status
+      );
+    }
+
+
+    if (!response.ok || !result.success) {
+
+      showError(
+        'Доступ ограничен',
+        result.error ||
+          'Ваш Telegram ID отсутствует в белом списке.'
+      );
+
+      return false;
+    }
+
+
+    if (result.userName) {
+      currentUserName = result.userName;
+    }
+
+
+    showApp();
+
+    renderBoard();
+
+    return true;
+
+  } catch (error) {
+
+    console.error(
+      'AUTH ERROR:',
+      error
+    );
+
     showError(
-      'Доступ ограничен',
-      result.error ||
-        `Ошибка авторизации. HTTP ${response.status}`
+      'Ошибка авторизации',
+      error.message ||
+        'Не удалось выполнить авторизацию.'
     );
 
     return false;
   }
-
-  if (result.userName) {
-    currentUserName = result.userName;
-  }
-
-  showApp();
-  renderBoard();
-
-  return true;
-
-} catch (error) {
-
-  console.error('AUTH ERROR:', error);
-
-  showError(
-    'ТЕСТОВАЯ ВЕРСИЯ',
-    'НОВЫЙ SCRIPT.JS ЗАГРУЖЕН'
-  );
-
-  return false;
 }
+
 
 // ============================================================
 // Kanban
@@ -271,7 +285,9 @@ function renderBoard() {
         document.createElement('div');
 
       taskText.className = 'task-text';
-      taskText.innerText = task.text;
+
+      taskText.innerText =
+        task.text;
 
 
       const taskAuthor =
@@ -327,16 +343,22 @@ function toggleForm() {
 function addTask() {
 
   const text =
-    document.getElementById('form-text').value.trim();
+    document.getElementById('form-text')
+      .value
+      .trim();
 
   const executor =
-    document.getElementById('form-executor').value.trim();
+    document.getElementById('form-executor')
+      .value
+      .trim();
 
   const deadline =
-    document.getElementById('form-deadline').value;
+    document.getElementById('form-deadline')
+      .value;
 
   const priority =
-    document.getElementById('form-priority').value;
+    document.getElementById('form-priority')
+      .value;
 
 
   if (!text) {
@@ -364,11 +386,14 @@ function addTask() {
 
 
   renderBoard();
+
   toggleForm();
 
 
   document.getElementById('form-text').value = '';
+
   document.getElementById('form-executor').value = '';
+
   document.getElementById('form-deadline').value = '';
 }
 
@@ -450,7 +475,9 @@ function exportToExcel() {
 
 
   const worksheet =
-    XLSX.utils.json_to_sheet(dataToExport);
+    XLSX.utils.json_to_sheet(
+      dataToExport
+    );
 
   const workbook =
     XLSX.utils.book_new();
@@ -476,8 +503,11 @@ function exportToExcel() {
 
 async function initApplication() {
 
-  // Если файл случайно открыть напрямую в браузере,
-  // не пытаемся проводить Telegram авторизацию.
+  console.log(
+    'Pocket Jira: initApplication()'
+  );
+
+
   if (!tg) {
 
     showError(
@@ -489,18 +519,17 @@ async function initApplication() {
   }
 
 
-  // Telegram сообщает, что Mini App готов
   tg.ready();
+
   tg.expand();
 
 
-  // Применяем тему Telegram
   applyTelegramTheme();
 
 
-  // Сначала получаем имя локально.
-  // Это не является авторизацией — только предварительное отображение.
-  const telegramUser = getTelegramUser();
+  const telegramUser =
+    getTelegramUser();
+
 
   if (telegramUser) {
 
@@ -512,10 +541,12 @@ async function initApplication() {
   }
 
 
-  // Настоящая авторизация происходит на Vercel
   await authorize();
 }
 
 
+// ============================================================
 // Запуск
+// ============================================================
+
 initApplication();
