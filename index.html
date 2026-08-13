@@ -182,12 +182,12 @@
     async function checkAuth() {
       document.getElementById('user-greeting').innerText = "Проверка доступа...";
       
-      if (!tg || !tg.initData) {
+      if (!tg) {
         document.getElementById('app').style.display = 'none';
-        document.getElementById('auth-error').innerHTML = "<h2>Ошибка доступа</h2><p>Приложение можно запустить только внутри рабочего чата Telegram.</p>";
+        document.getElementById('auth-error').innerHTML = "<h2>Ошибка</h2><p>Пожалуйста, откройте приложение внутри Telegram.</p>";
         document.getElementById('auth-error').style.display = 'block';
         return;
-      }
+    }
 
       if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const u = tg.initDataUnsafe.user;
