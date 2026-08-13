@@ -118,112 +118,63 @@ function getTelegramUser() {
 // ============================================================
 
 async function authorize() {
-
   if (!tg) {
-    showError(
-      'Telegram не найден',
-      'Приложение должно быть открыто внутри Telegram.'
-    );
-
+    showError('Telegram не найден', 'Приложение должно быть открыто внутри Telegram.');
     return false;
   }
-
   if (!tg.initData) {
-    showError(
-      'Нет данных Telegram',
-      'Telegram не передал данные авторизации.'
-    );
-
+    showError('Нет данных Telegram', 'Telegram не передал данные авторизации.');
     return false;
   }
 
-  document.getElementById('status-title').innerText =
-    'Проверка прав доступа...';
-
-  document.getElementById('status-desc').innerText =
-    'Проверяем ваш Telegram ID.';
-
+  document.getElementById('status-title').innerText = 'Проверка прав доступа...';
+  document.getElementById('status-desc').innerText = 'Проверяем ваш Telegram ID.';
 
   try {
-
     const response = await fetch(API_URL, {
       method: 'POST',
-
       headers: {
         'Content-Type': 'application/json'
       },
-
       body: JSON.stringify({
         initData: tg.initData
       })
     });
 
+    // ИСПРАВЛЕНО: Сразу читаем как JSON, без промежуточного text()
+    const result = await response.json();
 
-    const responseText = await response.text();
+    console.log('AUTH STATUS:', response.status);
+    console.log('AUTH RESPONSE:', result);
 
-    console.log(
-      'AUTH STATUS:',
-      response.status
-    );
-
-    console.log(
-      'AUTH RESPONSE:',
-      responseText
-    );
-
-
-    let result;
-
-    try {
-      result = JSON.parse(responseText);
-    } catch (e) {
-      throw new Error(
-        'Сервер вернул некорректный ответ. HTTP ' +
-        response.status
-      );
-    }
-
-
+    // Проверяем статус ответа сервера
     if (!response.ok || !result.success) {
-
       showError(
         'Доступ ограничен',
-        result.error ||
-          'Ваш Telegram ID отсутствует в белом списке.'
+        result.error || 'Ваш Telegram ID отсутствует в белом списке.'
       );
-
       return false;
     }
 
-
+    // Если сервер успешно вернул имя
     if (result.userName) {
       currentUserName = result.userName;
     }
 
-
-    showApp();
-
+    // Сначала обновляем данные на доске, затем переключаем экраны
     renderBoard();
-
+    showApp();
     return true;
 
   } catch (error) {
-
-    console.error(
-      'AUTH ERROR:',
-      error
-    );
-
+    console.error('AUTH ERROR:', error);
     showError(
       'Ошибка авторизации',
-      error.message ||
-        'Не удалось выполнить авторизацию.'
+      error.message || 'Не удалось выполнить авторизацию.'
     );
-
     return false;
   }
 }
-
 
 // ============================================================
 // Kanban
