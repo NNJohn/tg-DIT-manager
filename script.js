@@ -58,7 +58,7 @@ function toggleForm() {
 // ОТПРАВКА СОЗДАННОЙ ЗАДАЧИ В MONGODB
 async function addTask() {
   var text = document.getElementById('form-text').value.trim();
-  var executor = document.getElementById('form-executor').value.trim();
+  const executor = document.getElementById('form-executor').value;
   var deadline = document.getElementById('form-deadline').value;
   var priority = document.getElementById('form-priority').value;
 

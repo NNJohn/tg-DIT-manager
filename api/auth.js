@@ -65,7 +65,13 @@ module.exports = async (req, res) => {
     // МАРШРУТ 1: Проверка входа и выдача стартового массива задач
     if (req.method === 'POST' && req.body.action === 'login') {
       const dbTasks = await collection.find({}).toArray();
-      return res.status(200).json({ success: true, userName: realName, tasks: dbTasks });
+      // Отдаем массив разрешенных ID вместе с задачами
+      return res.status(200).json({ 
+        success: true, 
+        userName: realName, 
+        tasks: dbTasks,
+        usersWhitelist: allowedUsers 
+      });
     }
 
     // МАРШРУТ 2: Добавление новой задачи
