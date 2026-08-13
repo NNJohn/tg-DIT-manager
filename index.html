@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Telegram Kanban MVP</title>
-  <!-- Подключаем Telegram SDK -->
   <script src="https://telegram.org"></script>
-  <!-- Подключаем Excel SDK -->
   <script src="https://jsdelivr.net"></script>
   <style>
     :root {
@@ -69,7 +67,6 @@
       padding: 10px;
       border-radius: 8px;
       border-left: 5px solid #ccc;
-      cursor: grab;
     }
     .task-card.priority-high { border-left-color: #e53935; }
     .task-card.priority-medium { border-left-color: #ffb300; }
@@ -100,7 +97,7 @@
       padding: 50px 20px;
     }
     #app {
-      display: block; /* По умолчанию показываем интерфейс для тестов */
+      display: block;
     }
   </style>
 </head>
@@ -151,7 +148,6 @@
   </div>
 
   <script>
-    // Проверяем наличие Telegram WebApp строго через безопасное условие
     const hasTelegram = typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp;
     const tg = hasTelegram ? window.Telegram.WebApp : null;
 
@@ -160,11 +156,10 @@
         tg.ready();
         tg.expand();
       } catch (e) {
-        console.error("Ошибка инициализации Telegram SDK:", e);
+        console.error(e);
       }
     }
 
-    // Безопасное накатывание тем оформления
     try {
       const getParam = (name, fallback) => (tg && tg.themeParams && tg.themeParams[name]) ? tg.themeParams[name] : fallback;
       document.documentElement.style.setProperty('--tg-theme-bg-color', getParam('bg_color', '#ffffff'));
@@ -174,10 +169,9 @@
       document.documentElement.style.setProperty('--tg-theme-button-text-color', getParam('button_text_color', '#ffffff'));
       document.documentElement.style.setProperty('--tg-theme-secondary-bg-color', getParam('secondary_bg_color', '#f4f4f5'));
     } catch (err) {
-      console.warn("Не удалось применить темы Telegram:", err);
+      console.warn(err);
     }
 
-    // Тестовая дата
     let tasks = [
       { id: '1', status: 'todo', text: 'Запустить MVP бота', author: 'Система', executor: 'Команда', deadline: '2026-08-20', priority: 'high' },
       { id: '2', status: 'progress', text: 'Тестирование интерфейса', author: 'Иван', executor: 'Петр', deadline: '2026-08-15', priority: 'medium' }
@@ -186,23 +180,13 @@
     let currentUserName = "Тестовый Юзер";
 
     function checkAuth() {
-      // Подтягиваем имя, если мы внутри реальной телеги
       if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const u = tg.initDataUnsafe.user;
         currentUserName = u.first_name || u.username || "Пользователь";
       }
       
-      document.getElementById('user-greeting').innerText = `Привет, ${currentUserName}!`;
-      
-      // На этапе MVP временно всегда пускаем
-      const isAuthenticated = true;
-
-      if (!isAuthenticated) {
-        document.getElementById('app').style.style.display = 'none';
-        document.getElementById('auth-error').style.display = 'block';
-      } else {
-        renderBoard();
-      }
+      document.getElementById('user-greeting').innerText = "Привет, " + currentUserName + "!";
+      renderBoard();
     }
 
     function renderBoard() {
@@ -216,15 +200,13 @@
         
         columns[status].forEach(task => {
           const card = document.createElement('div');
-          card.className = `task-card priority-${task.priority}`;
+          card.className = "task-card priority-" + task.priority;
           card.draggable = true;
           card.ondragstart = (e) => e.dataTransfer.setData('text/plain', task.id);
           
-          card.innerHTML = `
-            <div class="task-text">${task.text}</div>
-            <div class="task-meta">От: ${task.author} | Исполнитель: ${task.executor || '—'}</div>
-            <div class="task-meta">Срок: ${task.deadline || '—'}</div>
-          `;
+          card.innerHTML = '<div class="task-text">' + task.text + '</div>' +
+                           '<div class="task-meta">От: ' + task.author + ' | Исполнитель: ' + (task.executor || '—') + '</div>' +
+                           '<div class="task-meta">Срок: ' + (task.deadline || '—') + '</div>';
           listEl.appendChild(card);
         });
       }
@@ -290,3 +272,7 @@
       XLSX.writeFile(workbook, "kanban_tasks.xlsx");
     }
 
+    checkAuth();
+  </script>
+</body>
+</html>
