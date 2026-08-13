@@ -2,8 +2,7 @@
 // Pocket Jira — Telegram Mini App
 // ============================================================
 
-const API_URL =
-  'https://tg-dit-manager-2lb5efp2w-dit11.vercel.app/api/auth';
+const API_URL = '/api/auth';
 
 
 // ============================================================
