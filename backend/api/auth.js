@@ -1,11 +1,6 @@
 const crypto = require('crypto');
 
-// ID вашей разрешенной группы в Telegram (обычно начинается с -100)
-// Замените на ID вашего чата или вынесите в переменные окружения
-const ALLOWED_CHAT_ID = process.env.ALLOWED_CHAT_ID || "-100XXXXXXXXXX"; 
-
 module.exports = async (req, res) => {
-  // Разрешаем запросы с вашего GitHub Pages
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -19,7 +14,11 @@ module.exports = async (req, res) => {
   }
 
   const { initData } = req.body;
-  const botToken = process.env.BOT_TOKEN; // Токен бота из @BotFather
+  const botToken = process.env.BOT_TOKEN;
+
+  // Считываем списки разрешенных ID из настроек Vercel (разделенные запятыми)
+  const allowedChats = (process.env.ALLOWED_CHAT_IDS || '').split(',').map(id => id.trim());
+  const allowedUsers = (process.env.ALLOWED_USER_IDS || '').split(',').map(id => id.trim());
 
   if (!initData || !botToken) {
     return res.status(400).json({ error: 'Missing parameters' });
@@ -42,19 +41,29 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: 'Криптографическая проверка не пройдена' });
   }
 
-  // 2. Проверка контекста чата
+  // Получаем данные пользователя и контекст чата
   const chatParam = urlParams.get('chat');
-  if (!chatParam) {
-    return res.status(403).json({ error: 'Приложение должно быть запущено строго из рабочего чата' });
+  const userParam = urlParams.get('user');
+  
+  const user = userParam ? JSON.parse(userParam) : null;
+  const chat = chatParam ? JSON.parse(chatParam) : null;
+
+  // 2. Логика проверки белого списка (Пропускаем, если совпал чат ИЛИ если пользователь в списке)
+  let isAccessGranted = false;
+
+  // Проверка по ID чата (если запуск из группы)
+  if (chat && allowedChats.includes(String(chat.id))) {
+    isAccessGranted = true;
   }
 
-  const chat = JSON.parse(chatParam);
-
-  // Сверяем ID чата, из которого открыли, с вашим разрешенным ID
-  if (String(chat.id) !== String(ALLOWED_CHAT_ID)) {
-    return res.status(403).json({ error: 'Доступ из этого чата запрещен' });
+  // Проверка по личному ID пользователя (если запуск из лички/профиля)
+  if (user && allowedUsers.includes(String(user.id))) {
+    isAccessGranted = true;
   }
 
-  // Если всё ок — отдаем статус успеха
+  if (!isAccessGranted) {
+    return res.status(403).json({ error: 'Доступ ограничен. Вас или вашего чата нет в белом списке.' });
+  }
+
   return res.status(200).json({ success: true });
 };
