@@ -1,7 +1,6 @@
 const crypto = require('crypto');
 
 module.exports = async (req, res) => {
-  // Настройка CORS для связи с GitHub Pages
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -16,15 +15,13 @@ module.exports = async (req, res) => {
 
   const { initData } = req.body;
   const botToken = process.env.BOT_TOKEN;
-
-  // Получаем список разрешенных ID из настроек Vercel
   const allowedUsers = (process.env.ALLOWED_USER_IDS || '').split(',').map(id => id.trim());
 
   if (!initData || !botToken) {
     return res.status(400).json({ error: 'Missing parameters' });
   }
 
-  // 1. Валидация подписи Telegram (проверка, что данные не подделаны)
+  // 1. Валидация подписи Telegram
   const secretKey = crypto.createHmac('sha256', 'WebAppData').update(botToken).digest();
   const urlParams = new URLSearchParams(initData);
   const hash = urlParams.get('hash');
@@ -41,19 +38,25 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: 'Криптографическая проверка не пройдена' });
   }
 
-  // 2. Проверка личного Telegram ID пользователя
+  // 2. Безопасное извлечение данных пользователя на бэкенде
   const userParam = urlParams.get('user');
   if (!userParam) {
-    return res.status(400).json({ error: 'Данные пользователя отсутствуют' });
+    return res.status(400).json({ error: 'Данные пользователя отсутствуют в сессии' });
   }
 
   const user = JSON.parse(userParam);
 
-  // Проверяем, есть ли ID зашедшего человека в нашем списке в Vercel
+  // 3. Проверка белого списка по ID
   if (!allowedUsers.includes(String(user.id))) {
     return res.status(403).json({ error: 'Доступ ограничен. Вашего Telegram ID нет в белом списке.' });
   }
 
-  // Если пользователь прошел проверку
-  return res.status(200).json({ success: true });
+  // Собираем имя (берем First Name, если нет Username)
+  const realName = user.first_name || user.username || "Участник чата";
+
+  // Возвращаем фронтенду статус успеха и реальное имя пользователя
+  return res.status(200).json({ 
+    success: true, 
+    userName: realName 
+  });
 };

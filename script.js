@@ -123,11 +123,7 @@ async function initApplication() {
     console.error(e);
   }
 
-  if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-    currentUserName = tg.initDataUnsafe.user.first_name || tg.initDataUnsafe.user.username || "Пользователь";
-  }
-
-  document.getElementById('status-title').innerText = "Проверка белого списка...";
+  document.getElementById('status-title').innerText = "Авторизация в системе...";
 
   try {
     var response = await fetch('https://vercel.app', {
@@ -139,15 +135,18 @@ async function initApplication() {
     var result = await response.json();
 
     if (response.ok && result.success) {
+      // Имя берется строго из ответа бэкенда, защищенного шифром Telegram
+      currentUserName = result.userName;
+      
       document.getElementById('auth-status-screen').style.display = 'none';
       document.getElementById('app').style.display = 'block';
       document.getElementById('user-greeting').innerText = "Привет, " + currentUserName + "!";
       renderBoard();
     } else {
-      showError("Доступ ограничен", result.error || "Вашего личного Telegram ID нет в белом списке этой системы.");
+      showError("Доступ ограничен", result.error || "Ошибка авторизации.");
     }
   } catch (error) {
-    showError("Ошибка сервера", "Не удалось установить соединение с сервером авторизации Vercel.");
+    showError("Ошибка сервера", "Не удалось связаться с сервером авторизации.");
     console.error(error);
   }
 }
