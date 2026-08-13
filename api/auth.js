@@ -95,11 +95,23 @@ module.exports = async (req, res) => {
     // МАРШРУТ 4: Синхронизация данных с Google Sheets
     if (req.method === 'POST' && req.body.action === 'sync_google') {
       
-      // Форматируем приватный ключ, защищая от сбоев экранирования \n в Vercel
+      // ИСПРАВЛЕННЫЙ И НАДЕЖНЫЙ ВАРИАНТ:
       let privateKey = process.env.GOOGLE_PRIVATE_KEY;
-      if (privateKey && privateKey.includes('\\n')) {
-        privateKey = privateKey.replace(/\\n/g, '\n');
+
+      if (privateKey) {
+       // Убираем случайные внешние кавычки, если они закрались
+       privateKey = privateKey.trim().replace(/^["']|["']$/g, '');
+  
+       // Если ключ содержит текстовые слэши \n — превращаем их в переносы
+        if (privateKey.includes('\\n')) {
+          privateKey = privateKey.replace(/\\n/g, '\n');
+         } else {
+        // Если ключ многострочный (как на скриншоте) — 
+        // нормализуем переносы строк для Linux-серверов Vercel
+        privateKey = privateKey.split(/\r?\n/).join('\n');
       }
+}
+
 
       const auth = new google.auth.JWT(
         process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
