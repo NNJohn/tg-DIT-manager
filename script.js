@@ -155,70 +155,61 @@ async function authorize() {
 
 
   try {
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      initData: tg.initData
+    })
+  });
 
-    const response = await fetch(API_URL, {
-      method: 'POST',
+  const responseText = await response.text();
 
-      headers: {
-        'Content-Type': 'application/json'
-      },
+  console.log('AUTH STATUS:', response.status);
+  console.log('AUTH RESPONSE:', responseText);
 
-      body: JSON.stringify({
-        initData: tg.initData
-      })
-    });
+  let result;
 
+  try {
+    result = JSON.parse(responseText);
+  } catch (e) {
+    throw new Error(
+      `Сервер вернул не JSON. HTTP ${response.status}. Ответ: ${responseText.substring(0, 300)}`
+    );
+  }
 
-    let result;
-
-    try {
-      result = await response.json();
-    } catch (jsonError) {
-      throw new Error(
-        'Сервер вернул некорректный ответ.'
-      );
-    }
-
-
-    console.log('Auth response:', response.status, result);
-
-
-    if (!response.ok || !result.success) {
-
-      showError(
-        'Доступ ограничен',
-        result.error ||
-          'Вашего Telegram ID нет в белом списке этой системы.'
-      );
-
-      return false;
-    }
-
-
-    // Имя пришло именно с backend после проверки Telegram ID
-    if (result.userName) {
-      currentUserName = result.userName;
-    }
-
-
-    showApp();
-    renderBoard();
-
-    return true;
-
-  } catch (error) {
-
-    console.error('Ошибка авторизации:', error);
-
+  if (!response.ok || !result.success) {
     showError(
-      'Ошибка авторизации',
-      'Не удалось связаться с сервером авторизации.'
+      'Доступ ограничен',
+      result.error ||
+        `Ошибка авторизации. HTTP ${response.status}`
     );
 
     return false;
   }
-}
 
+  if (result.userName) {
+    currentUserName = result.userName;
+  }
+
+  showApp();
+  renderBoard();
+
+  return true;
+
+} catch (error) {
+
+  console.error('AUTH ERROR:', error);
+
+  showError(
+    'Ошибка авторизации',
+    error.message || 'Неизвестная ошибка'
+  );
+
+  return false;
+}
 
 // ============================================================
 // Kanban
