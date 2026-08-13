@@ -98,9 +98,110 @@ function exportToExcel() {
 }
 
 async function initApplication() {
-  var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+var tasks = [
+  { id: '1', status: 'todo', text: 'Запустить MVP бота', author: 'Система', executor: 'Команда', deadline: '2026-08-20', priority: 'high' },
+  { id: '2', status: 'progress', text: 'Тестирование интерфейса', author: 'Иван', executor: 'Петр', deadline: '2026-08-15', priority: 'medium' }
+];
 
-  if (!tg || !tg.initData || tg.initData === "") {
+var currentUserName = "Пользователь";
+
+function showError(title, message) {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-status-screen').style.display = 'block';
+  document.getElementById('status-title').innerText = title;
+  document.getElementById('status-desc').innerText = message;
+}
+
+function renderBoard() {
+  var columns = { todo: [], progress: [], done: [] };
+  tasks.forEach(function(t) { if (columns[t.status]) columns[t.status].push(t); });
+
+  for (var status in columns) {
+    var listEl = document.getElementById(status);
+    if (!listEl) continue;
+    listEl.innerHTML = '';
+    
+    columns[status].forEach(function(task) {
+      var card = document.createElement('div');
+      card.className = "task-card priority-" + task.priority;
+      card.draggable = true;
+      card.ondragstart = function(e) { e.dataTransfer.setData('text/plain', task.id); };
+      
+      card.innerHTML = '<div class="task-text">' + task.text + '</div>' +
+                       '<div class="task-meta">От: ' + task.author + ' | Исполнитель: ' + (task.executor || '—') + '</div>' +
+                       '<div class="task-meta">Срок: ' + (task.deadline || '—') + '</div>';
+      listEl.appendChild(card);
+    });
+  }
+}
+
+function toggleForm() {
+  var form = document.getElementById('task-form');
+  form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
+}
+
+function addTask() {
+  var text = document.getElementById('form-text').value;
+  var executor = document.getElementById('form-executor').value;
+  var deadline = document.getElementById('form-deadline').value;
+  var priority = document.getElementById('form-priority').value;
+
+  if (!text) return;
+
+  tasks.push({
+    id: Date.now().toString(),
+    status: 'todo',
+    text: text,
+    author: currentUserName,
+    executor: executor,
+    deadline: deadline,
+    priority: priority
+  });
+
+  renderBoard();
+  toggleForm();
+
+  document.getElementById('form-text').value = '';
+  document.getElementById('form-executor').value = '';
+  document.getElementById('form-deadline').value = '';
+}
+
+function allowDrop(e) { e.preventDefault(); }
+
+function drop(e, newStatus) {
+  e.preventDefault();
+  var taskId = e.dataTransfer.getData('text/plain');
+  var task = tasks.find(function(t) { return t.id === taskId; });
+  if (task) {
+    task.status = newStatus;
+    renderBoard();
+  }
+}
+
+function exportToExcel() {
+  var dataToExport = tasks.map(function(t) {
+    return {
+      'ID Задачи': t.id,
+      'Статус': t.status === 'todo' ? 'Надо сделать' : t.status === 'progress' ? 'В работе' : 'Готово',
+      'Текст задачи': t.text,
+      'Автор': t.author,
+      'Исполнитель': t.executor || 'Не назначен',
+      'Срок выполнения': t.deadline || 'Не указан',
+      'Приоритет': t.priority.toUpperCase()
+    };
+  });
+
+  var worksheet = XLSX.utils.json_to_sheet(dataToExport);
+  var workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Задачи");
+  XLSX.writeFile(workbook, "kanban_tasks.xlsx");
+}
+
+async function initApplication() {
+  var tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+  var isRealTelegram = tg && (tg.platform && tg.platform !== "unknown");
+
+  if (!isRealTelegram) {
     document.getElementById('auth-status-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     document.getElementById('user-greeting').innerText = "Привет, Разработчик (Браузер)!";
@@ -123,7 +224,19 @@ async function initApplication() {
     console.error(e);
   }
 
-  document.getElementById('status-title').innerText = "Авторизация в системе...";
+  if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+    currentUserName = tg.initDataUnsafe.user.first_name || tg.initDataUnsafe.user.username || "Пользователь";
+  }
+
+  if (!tg.initData || tg.initData === "") {
+    document.getElementById('auth-status-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('user-greeting').innerText = "Привет, " + currentUserName + "!";
+    renderBoard();
+    return;
+  }
+
+  document.getElementById('status-title').innerText = "Проверка прав доступа...";
 
   try {
     var response = await fetch('https://vercel.app', {
@@ -135,19 +248,21 @@ async function initApplication() {
     var result = await response.json();
 
     if (response.ok && result.success) {
-      // Имя берется строго из ответа бэкенда, защищенного шифром Telegram
-      currentUserName = result.userName;
-      
+      if (result.userName) {
+        currentUserName = result.userName;
+      }
       document.getElementById('auth-status-screen').style.display = 'none';
       document.getElementById('app').style.display = 'block';
       document.getElementById('user-greeting').innerText = "Привет, " + currentUserName + "!";
       renderBoard();
     } else {
-      showError("Доступ ограничен", result.error || "Ошибка авторизации.");
+      showError("Доступ ограничен", result.error || "Вашего личного Telegram ID нет в белом списке этой системы.");
     }
   } catch (error) {
-    showError("Ошибка сервера", "Не удалось связаться с сервером авторизации.");
-    console.error(error);
+    document.getElementById('auth-status-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('user-greeting').innerText = "Привет, " + currentUserName + "!";
+    renderBoard();
   }
 }
 
