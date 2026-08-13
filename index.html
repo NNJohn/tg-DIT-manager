@@ -2,13 +2,21 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
   <title>Pocket Jira</title>
 
-  <!-- Telegram Mini Apps SDK -->
+  <!-- ========================================================
+       Telegram Mini Apps SDK
+       ======================================================== -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- SheetJS для экспорта в Excel -->
+  <!-- ========================================================
+       SheetJS — экспорт задач в Excel
+       ======================================================== -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
   <style>
@@ -26,9 +34,19 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background-color: var(--tg-theme-secondary-bg-color);
-      color: var(--tg-theme-text-color);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
+        sans-serif;
+
+      background-color:
+        var(--tg-theme-secondary-bg-color);
+
+      color:
+        var(--tg-theme-text-color);
+
       margin: 0;
       padding: 10px;
     }
@@ -47,8 +65,12 @@
     }
 
     button {
-      background-color: var(--tg-theme-button-color);
-      color: var(--tg-theme-button-text-color);
+      background-color:
+        var(--tg-theme-button-color);
+
+      color:
+        var(--tg-theme-button-text-color);
+
       border: none;
       padding: 8px 12px;
       border-radius: 8px;
@@ -72,31 +94,43 @@
     }
 
     .column {
-      background-color: var(--tg-theme-bg-color);
+      background-color:
+        var(--tg-theme-bg-color);
+
       border-radius: 10px;
       padding: 10px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+      box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.1);
     }
 
     .column-title {
       font-weight: bold;
       margin-bottom: 10px;
       padding-bottom: 5px;
-      border-bottom: 2px solid var(--tg-theme-secondary-bg-color);
+
+      border-bottom:
+        2px solid var(--tg-theme-secondary-bg-color);
     }
 
     .task-list {
       min-height: 50px;
+
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
     .task-card {
-      background-color: var(--tg-theme-secondary-bg-color);
+      background-color:
+        var(--tg-theme-secondary-bg-color);
+
       padding: 10px;
       border-radius: 8px;
-      border-left: 5px solid #ccc;
+
+      border-left:
+        5px solid #ccc;
+
       cursor: grab;
     }
 
@@ -123,14 +157,19 @@
 
     .task-meta {
       font-size: 0.8rem;
-      color: var(--tg-theme-hint-color);
+
+      color:
+        var(--tg-theme-hint-color);
     }
 
     .form-container {
-      background-color: var(--tg-theme-bg-color);
+      background-color:
+        var(--tg-theme-bg-color);
+
       padding: 15px;
       border-radius: 10px;
       margin-bottom: 15px;
+
       display: none;
       flex-direction: column;
       gap: 8px;
@@ -139,21 +178,33 @@
     .form-container input,
     .form-container select {
       width: 100%;
+
       padding: 8px;
-      border: 1px solid #ccc;
+
+      border:
+        1px solid #ccc;
+
       border-radius: 6px;
-      background: var(--tg-theme-bg-color);
-      color: var(--tg-theme-text-color);
+
+      background:
+        var(--tg-theme-bg-color);
+
+      color:
+        var(--tg-theme-text-color);
     }
 
     #auth-status-screen {
       display: block;
+
       text-align: center;
-      padding: 50px 20px;
+
+      padding:
+        50px 20px;
     }
 
     #auth-status-screen p {
-      color: var(--tg-theme-hint-color);
+      color:
+        var(--tg-theme-hint-color);
     }
 
     #app {
@@ -164,25 +215,59 @@
 
 <body>
 
+  <!-- ========================================================
+       Экран авторизации
+       ======================================================== -->
+
   <div id="auth-status-screen">
-    <h2 id="status-title">Подключение к Telegram...</h2>
+
+    <h2 id="status-title">
+      Подключение к Telegram...
+    </h2>
+
     <p id="status-desc">
       Пожалуйста, подождите. Идет проверка учетных данных.
     </p>
+
   </div>
+
+
+  <!-- ========================================================
+       Основное приложение
+       ======================================================== -->
 
   <div id="app">
 
     <header>
-      <h2 id="user-greeting">Загрузка...</h2>
+
+      <h2 id="user-greeting">
+        Загрузка...
+      </h2>
 
       <div class="header-buttons">
-        <button onclick="toggleForm()">+ Задача</button>
-        <button onclick="exportToExcel()">Excel</button>
+
+        <button onclick="toggleForm()">
+          + Задача
+        </button>
+
+        <button onclick="exportToExcel()">
+          Excel
+        </button>
+
       </div>
+
     </header>
 
-    <div id="task-form" class="form-container">
+
+    <!-- ======================================================
+         Форма создания задачи
+         ====================================================== -->
+
+    <div
+      id="task-form"
+      class="form-container"
+    >
+
       <input
         type="text"
         id="form-text"
@@ -202,13 +287,34 @@
       >
 
       <select id="form-priority">
-        <option value="low">Низкий приоритет</option>
-        <option value="medium" selected>Средний приоритет</option>
-        <option value="high">Высокий приоритет</option>
+
+        <option value="low">
+          Низкий приоритет
+        </option>
+
+        <option
+          value="medium"
+          selected
+        >
+          Средний приоритет
+        </option>
+
+        <option value="high">
+          Высокий приоритет
+        </option>
+
       </select>
 
-      <button onclick="addTask()">Сохранить задачу</button>
+      <button onclick="addTask()">
+        Сохранить задачу
+      </button>
+
     </div>
+
+
+    <!-- ======================================================
+         Kanban
+         ====================================================== -->
 
     <div class="board">
 
@@ -217,33 +323,67 @@
         ondragover="allowDrop(event)"
         ondrop="drop(event, 'todo')"
       >
-        <div class="column-title">Надо сделать</div>
-        <div id="todo" class="task-list"></div>
+
+        <div class="column-title">
+          Надо сделать
+        </div>
+
+        <div
+          id="todo"
+          class="task-list"
+        ></div>
+
       </div>
+
 
       <div
         class="column"
         ondragover="allowDrop(event)"
         ondrop="drop(event, 'progress')"
       >
-        <div class="column-title">В работе</div>
-        <div id="progress" class="task-list"></div>
+
+        <div class="column-title">
+          В работе
+        </div>
+
+        <div
+          id="progress"
+          class="task-list"
+        ></div>
+
       </div>
+
 
       <div
         class="column"
         ondragover="allowDrop(event)"
         ondrop="drop(event, 'done')"
       >
-        <div class="column-title">Готово</div>
-        <div id="done" class="task-list"></div>
+
+        <div class="column-title">
+          Готово
+        </div>
+
+        <div
+          id="done"
+          class="task-list"
+        ></div>
+
       </div>
 
     </div>
 
   </div>
 
-  <script src="script.js"></script>
+
+  <!-- ========================================================
+       Pocket Jira JavaScript
+
+       Версия нужна для принудительного обновления файла
+       в Telegram WebView после нового deployment.
+       ======================================================== -->
+
+  <script src="script.js?v=20260813-2"></script>
 
 </body>
 </html>
