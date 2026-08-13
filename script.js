@@ -318,28 +318,38 @@ async function drop(event, newStatus) {
 // ============================================================
 // Excel Экспорт (SheetJS)
 // ============================================================
-function exportToExcel() {
-  const dataToExport = tasks.map(function(task) {
-    return {
-      'ID Задачи': task.id,
-      'Статус':
-        task.status === 'todo'
-          ? 'Надо сделать'
-          : task.status === 'progress'
-            ? 'В работе'
-            : 'Готово',
-      'Текст задачи': task.text,
-      'Автор': task.author,
-      'Исполнитель': task.executor || 'Не назначен',
-      'Срок выполнения': task.deadline || 'Не указан',
-      'Приоритет': task.priority.toUpperCase()
-    };
-  });
+async function exportToExcel() {
+  if (!tg) return;
 
-  const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Задачи');
-  XLSX.writeFile(workbook, 'kanban_tasks.xlsx');
+  // Меням текст на кнопке, чтобы пользователь видел статус
+  const excelBtn = document.querySelector("button[onclick='exportToExcel()']");
+  if (excelBtn) excelBtn.innerText = "Синхронизация...";
+
+  try {
+    var response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        initData: tg.initData,
+        action: 'sync_google' // Отправляем команду на бэкенд
+      })
+    });
+
+    var result = await response.json();
+    if (response.ok && result.success) {
+      tg.showPopup({
+        title: 'Успешно',
+        message: 'Данные в Google Drive синхронизированы! Откройте вашу закрепленную таблицу.',
+        buttons: [{ type: 'ok' }]
+      });
+    } else {
+      alert(result.error || "Сбой синхронизации");
+    }
+  } catch (e) {
+    alert("Ошибка соединения с сервером.");
+  } finally {
+    if (excelBtn) excelBtn.innerText = "Excel";
+  }
 }
 
 // ============================================================

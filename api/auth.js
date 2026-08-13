@@ -97,6 +97,65 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true });
     }
 
+    // МАРШРУТ 4: Эксель
+    const { google } = require('googleapis'); // Импортируем в самый верх файла
+
+    // Внутри экспорта модуля, после проверок Whitelist:
+    if (req.method === 'POST' && req.body.action === 'sync_google') {
+      try {
+        // 1. Авторизация в Google Workspace
+        const auth = new google.auth.JWT(
+          process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+          null,
+          process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'), // Корректируем переносы строк ключа
+          ['https://googleapis.com']
+        );
+
+        const sheets = google.sheets({ version: 'v4', auth });
+        const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+
+        // 2. Достаем все актуальные задачи из нашей MongoDB
+        const dbTasks = await collection.find({}).toArray();
+
+        // 3. Форматируем данные для таблицы (первая строка — шапка)
+        const rows = [
+          ['ID Задачи', 'Статус', 'Текст задачи', 'Автор', 'Исполнитель', 'Срок', 'Приоритет']
+        ];
+
+        dbTasks.forEach(t => {
+          rows.push([
+            t.id,
+              t.status === 'todo' ? 'Надо сделать' : t.status === 'progress' ? 'В работе' : 'Готово',
+              t.text,
+              t.author,
+              t.executor || '—',
+              t.deadline || '—',
+              t.priority.toUpperCase()
+            ]);
+          });
+
+        // 4. Полностью очищаем старый лист таблицы перед перезаписью
+        await sheets.spreadsheets.values.clear({
+          spreadsheetId,
+          range: 'Лист1!A1:Z1000'
+        });
+
+        // 5. Записываем новые данные в Google Таблицу
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: 'Лист1!A1',
+          valueInputOption: 'USER_ENTERED',
+          resource: { values: rows }
+        });
+
+        return res.status(200).json({ success: true });
+
+      } catch (googleErr) {
+      console.error('Google Sheets Sync Error:', googleErr);
+      return res.status(500).json({ error: 'Не удалось обновить Google Таблицу.' });
+    }
+  }
+
     return res.status(400).json({ error: 'Некорректный метод' });
 
   } catch (err) {
