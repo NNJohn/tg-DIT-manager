@@ -135,14 +135,16 @@ module.exports = async (req, res) => {
 
     // МАРШРУТ 2: Добавление новой задачи в MongoDB Atlas
     if (req.method === 'POST' && req.body.action === 'create') {
+      const validStatuses = ['todo', 'progress', 'blocked', 'done', 'cancelled'];
+      const validPriorities = ['low', 'medium', 'high', 'critical'];
       const newTask = {
         id: Date.now().toString(),
-        status: 'todo',
+        status: validStatuses.includes(req.body.task.status) ? req.body.task.status : 'todo',
         text: req.body.task.text,
         author: realName,
         executor: req.body.task.executor || '—',
         deadline: req.body.task.deadline || '—',
-        priority: req.body.task.priority,
+        priority: validPriorities.includes(req.body.task.priority) ? req.body.task.priority : 'medium',
         createdAt: new Date()
       };
       await collection.insertOne(newTask);
@@ -213,6 +215,13 @@ module.exports = async (req, res) => {
         cancelled: 'Отменено'
       };
 
+      const priorityLabels = {
+        low: 'Низкий',
+        medium: 'Средний',
+        high: 'Высокий',
+        critical: 'Критический'
+      };
+
       const formatDueDate = (deadline) => {
         if (!deadline || deadline === '—') return '—';
         const isoDate = String(deadline).match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -229,7 +238,8 @@ module.exports = async (req, res) => {
           statusLabels[t.status] || 'Беклог',
           t.author,
           t.executor || '—',
-          formatDueDate(t.deadline)
+          formatDueDate(t.deadline),
+          priorityLabels[t.priority] || 'Средний'
         ]);
       });
 
@@ -304,6 +314,12 @@ module.exports = async (req, res) => {
               setDataValidation: {
                 range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 3, endColumnIndex: 4 },
                 rule: dropdownRule(memberOptions, 'Выберите исполнителя из справочника.')
+              }
+            },
+            {
+              setDataValidation: {
+                range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 5, endColumnIndex: 6 },
+                rule: dropdownRule(Object.values(priorityLabels), 'Выберите приоритет задачи.')
               }
             }
           ]

@@ -352,6 +352,14 @@
         <option value="">— Без исполнителя —</option>
       </select>
 
+      <select id="form-status">
+        <option value="todo" selected>Беклог</option>
+        <option value="progress">В работе</option>
+        <option value="blocked">Блок</option>
+        <option value="done">Выполнено</option>
+        <option value="cancelled">Отменено</option>
+      </select>
+
       <input
         type="date"
         id="form-deadline"
@@ -372,6 +380,10 @@
 
         <option value="high">
           Высокий приоритет
+        </option>
+
+        <option value="critical">
+          Критический приоритет
         </option>
 
       </select>
@@ -396,7 +408,7 @@
       >
 
         <div class="column-title">
-          Надо сделать
+          Беклог
         </div>
 
         <div
@@ -432,11 +444,47 @@
       >
 
         <div class="column-title">
-          Готово
+          Выполнено
         </div>
 
         <div
           id="done"
+          class="task-list"
+        ></div>
+
+      </div>
+
+
+      <div
+        class="column"
+        ondragover="allowDrop(event)"
+        ondrop="drop(event, 'blocked')"
+      >
+
+        <div class="column-title">
+          Блок
+        </div>
+
+        <div
+          id="blocked"
+          class="task-list"
+        ></div>
+
+      </div>
+
+
+      <div
+        class="column"
+        ondragover="allowDrop(event)"
+        ondrop="drop(event, 'cancelled')"
+      >
+
+        <div class="column-title">
+          Отменено
+        </div>
+
+        <div
+          id="cancelled"
           class="task-list"
         ></div>
 
@@ -485,7 +533,7 @@
        в Telegram WebView после нового deployment.
        ======================================================== -->
 
-  <script src="./script.js?v=20260815"></script>
+  <script src="./script.js?v=20260815-2"></script>
 
 </body>
 </html>

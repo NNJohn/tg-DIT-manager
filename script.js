@@ -191,7 +191,9 @@ function renderBoard() {
   const columns = {
     todo: [],
     progress: [],
-    done: []
+    blocked: [],
+    done: [],
+    cancelled: []
   };
 
   tasks.forEach(function(task) {
@@ -443,6 +445,7 @@ async function addTask() {
   // Считываем выбранное значение из выпадающего списка select
   const executor = document.getElementById('form-executor').value;
   const deadline = document.getElementById('form-deadline').value;
+  const status = document.getElementById('form-status').value;
   const priority = document.getElementById('form-priority').value;
 
   if (!text) {
@@ -456,7 +459,7 @@ async function addTask() {
       body: JSON.stringify({
         initData: tg.initData,
         action: 'create', // Сигнал бэкенду на запись в базу
-        task: { text: text, executor: executor, deadline: deadline, priority: priority }
+        task: { text: text, executor: executor, deadline: deadline, status: status, priority: priority }
       })
     });
     
