@@ -205,39 +205,109 @@ module.exports = async (req, res) => {
       // Достаем актуальный срез из MongoDB Atlas
       const dbTasks = await collection.find({}).toArray();
 
-      // Формируем структуру строк (первая строка — шапка таблицы)
-      const rows = [
-        ['ID Задачи', 'Статус', 'Текст задачи', 'Автор', 'Исполнитель', 'Срок', 'Приоритет']
-      ];
+      const statusLabels = {
+        todo: 'Беклог',
+        progress: 'В работе',
+        blocked: 'Блок',
+        done: 'Выполнено',
+        cancelled: 'Отменено'
+      };
+
+      const formatDueDate = (deadline) => {
+        if (!deadline || deadline === '—') return '—';
+        const isoDate = String(deadline).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        return isoDate ? `${isoDate[3]}.${isoDate[2]}.${isoDate[1]}` : deadline;
+      };
+
+      // Строка 1 принадлежит пользователю и никогда не перезаписывается.
+      // Notes станет отдельным шестым столбцом в следующей итерации.
+      const rows = [];
 
       dbTasks.forEach(t => {
         rows.push([
-          t.id,
-          t.status === 'todo' ? 'Надо сделать' : t.status === 'progress' ? 'В работе' : 'Готово',
           t.text,
+          statusLabels[t.status] || 'Беклог',
           t.author,
           t.executor || '—',
-          t.deadline || '—',
-          t.priority.toUpperCase()
+          formatDueDate(t.deadline)
         ]);
       });
 
       // Автоматически определяем имя первого листа таблицы (Лист1 или Sheet1)
       const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
-      const firstSheetName = spreadsheetInfo.data.sheets[0].properties.title;
+      const firstSheet = spreadsheetInfo.data.sheets[0].properties;
+      const firstSheetName = firstSheet.title;
+      const firstSheetId = firstSheet.sheetId;
 
-      // Очищаем старые записи
-      await sheets.spreadsheets.values.clear({ 
-        spreadsheetId, 
-        range: `${firstSheetName}!A1:Z1000` 
+      const teamMembers = await db.collection('team_members')
+        .find({}, { projection: { _id: 0, displayName: 1, telegramFirstName: 1, telegramLastName: 1, telegramUsername: 1, team: 1 } })
+        .toArray();
+
+      const formatMemberLabel = (member) => {
+        if (member.displayName) return member.team ? `${member.displayName} · ${member.team}` : member.displayName;
+        const telegramName = [member.telegramFirstName, member.telegramLastName].filter(Boolean).join(' ');
+        return member.telegramUsername ? `${telegramName || 'Пользователь'} · @${member.telegramUsername}` : telegramName || 'Пользователь';
+      };
+
+      // Старые значения включены временно, чтобы ранее созданные задачи не стали
+      // невалидными в dropdown до полного перехода на справочник.
+      const memberOptions = Array.from(new Set([
+        '—',
+        ...teamMembers.map(formatMemberLabel),
+        ...dbTasks.flatMap(task => [task.author, task.executor]).filter(value => value && value !== '—')
+      ]));
+
+      const dropdownRule = (values, inputMessage) => ({
+        condition: {
+          type: 'ONE_OF_LIST',
+          values: values.map(value => ({ userEnteredValue: value }))
+        },
+        strict: true,
+        showCustomUi: true,
+        inputMessage
       });
-      
-      // Записываем обновленные строки
-      await sheets.spreadsheets.values.update({
+
+      // Очищаем только строки с задачами, не затрагивая заголовки в строке 1.
+      await sheets.spreadsheets.values.clear({
         spreadsheetId,
-        range: `${firstSheetName}!A1`,
-        valueInputOption: 'USER_ENTERED',
-        resource: { values: rows }
+        range: `${firstSheetName}!A2:Z1000`
+      });
+
+      // Записываем задачи, начиная строго со второй строки.
+      if (rows.length) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `${firstSheetName}!A2`,
+          valueInputOption: 'USER_ENTERED',
+          resource: { values: rows }
+        });
+      }
+
+      // Dropdown для статуса, автора и исполнителя — со второй строки и ниже.
+      await sheets.spreadsheets.batchUpdate({
+        spreadsheetId,
+        resource: {
+          requests: [
+            {
+              setDataValidation: {
+                range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 1, endColumnIndex: 2 },
+                rule: dropdownRule(Object.values(statusLabels), 'Выберите статус задачи.')
+              }
+            },
+            {
+              setDataValidation: {
+                range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 2, endColumnIndex: 3 },
+                rule: dropdownRule(memberOptions, 'Выберите автора из справочника.')
+              }
+            },
+            {
+              setDataValidation: {
+                range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 3, endColumnIndex: 4 },
+                rule: dropdownRule(memberOptions, 'Выберите исполнителя из справочника.')
+              }
+            }
+          ]
+        }
       });
 
       return res.status(200).json({ success: true });
