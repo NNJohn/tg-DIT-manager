@@ -318,7 +318,7 @@ module.exports = async (req, res) => {
         await sheets.spreadsheets.values.update({
           spreadsheetId,
           range: `${firstSheetName}!A2`,
-          valueInputOption: 'USER_ENTERED',
+          valueInputOption: 'RAW',
           resource: { values: rows }
         });
       }
