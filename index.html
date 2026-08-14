@@ -215,6 +215,57 @@
         var(--tg-theme-text-color);
     }
 
+    .devtools {
+      margin-top: 18px;
+      background-color: var(--tg-theme-bg-color);
+      border-radius: 10px;
+      padding: 12px;
+    }
+
+    .devtools summary {
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .devtools-content {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .devtools-note {
+      color: var(--tg-theme-hint-color);
+      font-size: 0.85rem;
+      margin: 0;
+    }
+
+    .member-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .member-card {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    .member-card input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+    }
+
+    .member-card button {
+      margin-top: 8px;
+    }
+
     #auth-status-screen {
       display: block;
 
@@ -392,6 +443,37 @@
       </div>
 
     </div>
+
+    <details
+      id="devtools"
+      class="devtools"
+      hidden
+    >
+      <summary>DevTools · справочник команды</summary>
+
+      <div class="devtools-content">
+        <p class="devtools-note">
+          Приглашение действует 24 часа и добавляет данные коллеги после команды /start.
+        </p>
+
+        <button
+          type="button"
+          onclick="createInvite()"
+        >
+          Создать приглашение
+        </button>
+
+        <p
+          id="invite-output"
+          class="devtools-note"
+        ></p>
+
+        <div
+          id="team-members"
+          class="member-list"
+        ></div>
+      </div>
+    </details>
 
   </div>
 

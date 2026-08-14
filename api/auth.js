@@ -31,6 +31,7 @@ module.exports = async (req, res) => {
 
   const botToken = process.env.BOT_TOKEN;
   const allowedUsers = (process.env.ALLOWED_USER_IDS || '').split(',').map(id => id.trim()).filter(Boolean);
+  const developerUsers = (process.env.DEV_USER_IDS || '').split(',').map(id => id.trim()).filter(Boolean);
   const initData = req.body?.initData || req.headers['x-tg-init-data'];
 
   if (!initData || !botToken) {
@@ -58,15 +59,78 @@ module.exports = async (req, res) => {
   }
 
   const realName = user.first_name || user.username || 'Участник';
+  const isDeveloper = developerUsers.includes(String(user.id));
 
   try {
     const { db } = await connectToDatabase();
     const collection = db.collection('tasks');
+    const teamMembers = db.collection('team_members');
 
     // МАРШРУТ 1: Вход в приложение и выгрузка задач на доску
     if (req.method === 'POST' && req.body.action === 'login') {
       const dbTasks = await collection.find({}).toArray();
-      return res.status(200).json({ success: true, userName: realName, tasks: dbTasks, usersWhitelist: allowedUsers });
+      return res.status(200).json({
+        success: true,
+        userName: realName,
+        tasks: dbTasks,
+        usersWhitelist: allowedUsers,
+        isDeveloper
+      });
+    }
+
+    // DevTools: справочник команды и одноразовые приглашения для /start.
+    if (req.method === 'POST' && ['list_team_members', 'create_invite', 'update_team_member'].includes(req.body.action)) {
+      if (!isDeveloper) {
+        return res.status(403).json({ error: 'DevTools доступны только разработчику.' });
+      }
+
+      if (req.body.action === 'list_team_members') {
+        const members = await teamMembers
+          .find({}, { projection: { _id: 0, telegramId: 1, telegramFirstName: 1, telegramLastName: 1, telegramUsername: 1, displayName: 1, team: 1, registeredAt: 1 } })
+          .sort({ registeredAt: -1 })
+          .toArray();
+        return res.status(200).json({ success: true, members });
+      }
+
+      if (req.body.action === 'create_invite') {
+        const token = `join_${crypto.randomBytes(24).toString('base64url')}`;
+        const createdAt = new Date();
+        const expiresAt = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000);
+        await db.collection('bot_invites').insertOne({
+          token,
+          createdAt,
+          expiresAt,
+          createdById: String(user.id)
+        });
+
+        const botUsername = (process.env.BOT_USERNAME || '').replace(/^@/, '');
+        return res.status(200).json({
+          success: true,
+          token,
+          expiresAt,
+          inviteLink: botUsername ? `https://t.me/${botUsername}?start=${token}` : null
+        });
+      }
+
+      const { telegramId, displayName, team } = req.body.member || {};
+      if (!/^\d+$/.test(String(telegramId || ''))) {
+        return res.status(400).json({ error: 'Некорректный Telegram ID.' });
+      }
+
+      const normalizedDisplayName = String(displayName || '').trim();
+      const normalizedTeam = String(team || '').trim();
+      if (normalizedDisplayName.length > 100 || normalizedTeam.length > 100) {
+        return res.status(400).json({ error: 'Имя и команда не должны быть длиннее 100 символов.' });
+      }
+
+      const result = await teamMembers.updateOne(
+        { telegramId: String(telegramId) },
+        { $set: { displayName: normalizedDisplayName, team: normalizedTeam, updatedAt: new Date() } }
+      );
+      if (!result.matchedCount) {
+        return res.status(404).json({ error: 'Пользователь не найден в справочнике.' });
+      }
+      return res.status(200).json({ success: true });
     }
 
     // МАРШРУТ 2: Добавление новой задачи в MongoDB Atlas

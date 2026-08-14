@@ -4,6 +4,10 @@
     {
       "source": "/api/auth",
       "destination": "/api/auth.js"
+    },
+    {
+      "source": "/api/bot",
+      "destination": "/api/bot.js"
     }
   ]
 }

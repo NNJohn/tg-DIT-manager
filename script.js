@@ -3,6 +3,7 @@
 const API_URL = '/api/auth';
 let tasks = [];
 let currentUserName = 'Пользователь';
+let isDeveloper = false;
 
 const tg =
   window.Telegram && window.Telegram.WebApp
@@ -163,6 +164,12 @@ async function authorize() {
     // Динамически строим список исполнителей на основе вайтлиста Vercel
     populateExecutors(result.usersWhitelist);
 
+    isDeveloper = Boolean(result.isDeveloper);
+    if (isDeveloper) {
+      document.getElementById('devtools').hidden = false;
+      loadTeamMembers();
+    }
+
     // Рендерим доску и открываем приложение
     renderBoard();
     showApp();
@@ -242,6 +249,136 @@ function renderBoard() {
       card.appendChild(taskDeadline);
       listElement.appendChild(card);
     });
+  }
+}
+
+// ============================================================
+// DevTools — справочник команды и приглашения для Telegram-бота
+// ============================================================
+async function devRequest(action, payload) {
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({ initData: tg.initData, action: action }, payload || {}))
+  });
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.error || 'Не удалось выполнить действие DevTools.');
+  }
+  return result;
+}
+
+function getMemberTelegramName(member) {
+  const fullName = [member.telegramFirstName, member.telegramLastName].filter(Boolean).join(' ');
+  const username = member.telegramUsername ? ' @' + member.telegramUsername : '';
+  return (fullName || 'Пользователь') + username;
+}
+
+function renderTeamMembers(members) {
+  const list = document.getElementById('team-members');
+  list.innerHTML = '';
+
+  if (!members.length) {
+    list.innerText = 'Пока никто не зарегистрировался через бота.';
+    return;
+  }
+
+  members.forEach(function(member) {
+    const card = document.createElement('div');
+    card.className = 'member-card';
+
+    const info = document.createElement('div');
+    info.className = 'task-meta';
+    info.innerText = getMemberTelegramName(member) + ' · ID ' + member.telegramId;
+
+    const displayName = document.createElement('input');
+    displayName.id = 'member-display-' + member.telegramId;
+    displayName.type = 'text';
+    displayName.maxLength = 100;
+    displayName.placeholder = 'Отображаемое имя для экспорта';
+    displayName.value = member.displayName || '';
+
+    const team = document.createElement('input');
+    team.id = 'member-team-' + member.telegramId;
+    team.type = 'text';
+    team.maxLength = 100;
+    team.placeholder = 'Команда или роль (необязательно)';
+    team.value = member.team || '';
+
+    const saveButton = document.createElement('button');
+    saveButton.type = 'button';
+    saveButton.innerText = 'Сохранить';
+    saveButton.onclick = function() {
+      saveTeamMember(member.telegramId, saveButton);
+    };
+
+    card.appendChild(info);
+    card.appendChild(displayName);
+    card.appendChild(team);
+    card.appendChild(saveButton);
+    list.appendChild(card);
+  });
+}
+
+async function loadTeamMembers() {
+  if (!isDeveloper) return;
+
+  const list = document.getElementById('team-members');
+  list.innerText = 'Загрузка справочника…';
+  try {
+    const result = await devRequest('list_team_members');
+    renderTeamMembers(result.members || []);
+  } catch (error) {
+    list.innerText = error.message || 'Не удалось загрузить справочник.';
+  }
+}
+
+async function createInvite() {
+  const output = document.getElementById('invite-output');
+  output.innerText = 'Создаём приглашение…';
+
+  try {
+    const result = await devRequest('create_invite');
+    if (!result.inviteLink) {
+      output.innerText = 'Укажите BOT_USERNAME в переменных Vercel, чтобы получить ссылку-приглашение.';
+      return;
+    }
+
+    output.innerText = result.inviteLink + '\nДействует до ' + new Date(result.expiresAt).toLocaleString('ru-RU') + '.';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(result.inviteLink);
+        output.innerText += ' Ссылка скопирована.';
+      } catch (copyError) {
+        console.warn('Не удалось скопировать приглашение:', copyError);
+      }
+    }
+  } catch (error) {
+    output.innerText = error.message || 'Не удалось создать приглашение.';
+  }
+}
+
+async function saveTeamMember(telegramId, button) {
+  const displayName = document.getElementById('member-display-' + telegramId).value;
+  const team = document.getElementById('member-team-' + telegramId).value;
+  const originalText = button.innerText;
+  button.disabled = true;
+  button.innerText = 'Сохраняем…';
+
+  try {
+    await devRequest('update_team_member', {
+      member: { telegramId: telegramId, displayName: displayName, team: team }
+    });
+    button.innerText = 'Сохранено';
+    setTimeout(function() {
+      button.innerText = originalText;
+      button.disabled = false;
+    }, 1200);
+  } catch (error) {
+    button.disabled = false;
+    button.innerText = originalText;
+    alert(error.message || 'Не удалось сохранить пользователя.');
   }
 }
 
