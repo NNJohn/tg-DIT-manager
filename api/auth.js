@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
   // Настройка CORS политик
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-tg-init-data');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, PUT, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, OPTIONS');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -92,7 +92,22 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true });
     }
 
-    // МАРШРУТ 4: Синхронизация данных с Google Sheets
+    // МАРШРУТ 4: Удаление задачи
+    if (req.method === 'DELETE') {
+      const { taskId } = req.body || {};
+      if (!taskId) {
+        return res.status(400).json({ error: 'Не указан идентификатор задачи.' });
+      }
+
+      const result = await collection.deleteOne({ id: taskId });
+      if (!result.deletedCount) {
+        return res.status(404).json({ error: 'Задача не найдена.' });
+      }
+
+      return res.status(200).json({ success: true });
+    }
+
+    // МАРШРУТ 5: Синхронизация данных с Google Sheets
     if (req.method === 'POST' && req.body.action === 'sync_google') {
       
       // ИСПРАВЛЕННЫЙ И НАДЕЖНЫЙ ВАРИАНТ:

@@ -155,6 +155,28 @@
       margin-bottom: 5px;
     }
 
+    .task-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .task-header .task-text {
+      flex: 1;
+    }
+
+    .task-delete {
+      background: transparent;
+      color: var(--tg-theme-hint-color);
+      font-size: 1.4rem;
+      line-height: 1;
+      padding: 0 2px;
+    }
+
+    .task-delete:disabled {
+      opacity: 0.6;
+    }
+
     .task-meta {
       font-size: 0.8rem;
 
@@ -381,7 +403,7 @@
        в Telegram WebView после нового deployment.
        ======================================================== -->
 
-  <script src="./script.js?v=20260813"></script>
+  <script src="./script.js?v=20260814"></script>
 
 </body>
 </html>

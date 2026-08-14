@@ -212,6 +212,23 @@ function renderBoard() {
       taskText.className = 'task-text';
       taskText.innerText = task.text;
 
+      const taskDelete = document.createElement('button');
+      taskDelete.className = 'task-delete';
+      taskDelete.type = 'button';
+      taskDelete.title = 'Удалить задачу';
+      taskDelete.setAttribute('aria-label', 'Удалить задачу');
+      taskDelete.innerText = '×';
+      taskDelete.draggable = false;
+      taskDelete.onclick = function(event) {
+        event.stopPropagation();
+        deleteTask(task.id, taskDelete);
+      };
+
+      const taskHeader = document.createElement('div');
+      taskHeader.className = 'task-header';
+      taskHeader.appendChild(taskText);
+      taskHeader.appendChild(taskDelete);
+
       const taskAuthor = document.createElement('div');
       taskAuthor.className = 'task-meta';
       taskAuthor.innerText = 'От: ' + task.author + ' | Исполнитель: ' + (task.executor || '—');
@@ -220,12 +237,60 @@ function renderBoard() {
       taskDeadline.className = 'task-meta';
       taskDeadline.innerText = 'Срок: ' + (task.deadline || '—');
 
-      card.appendChild(taskText);
+      card.appendChild(taskHeader);
       card.appendChild(taskAuthor);
       card.appendChild(taskDeadline);
       listElement.appendChild(card);
     });
   }
+}
+
+// ============================================================
+// Удаление задачи
+// ============================================================
+function askForDeletion(callback) {
+  if (tg && typeof tg.showConfirm === 'function') {
+    tg.showConfirm('Удалить эту задачу без возможности восстановления?', callback);
+    return;
+  }
+
+  callback(window.confirm('Удалить эту задачу без возможности восстановления?'));
+}
+
+function deleteTask(taskId, button) {
+  askForDeletion(async function(confirmed) {
+    if (!confirmed) return;
+
+    button.disabled = true;
+    button.innerText = '…';
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData: tg.initData, taskId: taskId })
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Не удалось удалить задачу.');
+      }
+
+      tasks = tasks.filter(function(task) {
+        return task.id !== taskId;
+      });
+      renderBoard();
+    } catch (error) {
+      button.disabled = false;
+      button.innerText = '×';
+      console.error('Ошибка удаления задачи:', error);
+      if (tg && typeof tg.showAlert === 'function') {
+        tg.showAlert(error.message || 'Не удалось удалить задачу.');
+      } else {
+        alert(error.message || 'Не удалось удалить задачу.');
+      }
+    }
+  });
 }
 
 // ============================================================
