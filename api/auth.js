@@ -132,7 +132,7 @@ module.exports = async (req, res) => {
         process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
         null,
         privateKey,
-        ['https://googleapis.com']
+        ['https://www.googleapis.com/auth/spreadsheets']
       );
 
       const sheets = google.sheets({ version: 'v4', auth });
