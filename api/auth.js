@@ -68,10 +68,14 @@ module.exports = async (req, res) => {
 
     // МАРШРУТ 1: Вход в приложение и выгрузка задач на доску
     if (req.method === 'POST' && req.body.action === 'login') {
+      const currentMember = await teamMembers.findOne(
+        { telegramId: String(user.id) },
+        { projection: { _id: 0, displayName: 1 } }
+      );
       const dbTasks = await collection.find({}).toArray();
       return res.status(200).json({
         success: true,
-        userName: realName,
+        userName: currentMember && currentMember.displayName ? currentMember.displayName : realName,
         tasks: dbTasks,
         usersWhitelist: allowedUsers,
         isDeveloper
@@ -137,11 +141,15 @@ module.exports = async (req, res) => {
     if (req.method === 'POST' && req.body.action === 'create') {
       const validStatuses = ['todo', 'progress', 'blocked', 'done', 'cancelled'];
       const validPriorities = ['low', 'medium', 'high', 'critical'];
+      const currentMember = await teamMembers.findOne(
+        { telegramId: String(user.id) },
+        { projection: { _id: 0, displayName: 1 } }
+      );
       const newTask = {
         id: Date.now().toString(),
         status: validStatuses.includes(req.body.task.status) ? req.body.task.status : 'todo',
         text: req.body.task.text,
-        author: realName,
+        author: currentMember && currentMember.displayName ? currentMember.displayName : realName,
         executor: req.body.task.executor || '—',
         deadline: req.body.task.deadline || '—',
         priority: validPriorities.includes(req.body.task.priority) ? req.body.task.priority : 'medium',
@@ -223,7 +231,7 @@ module.exports = async (req, res) => {
       };
 
       const formatDueDate = (deadline) => {
-        if (!deadline || deadline === '—') return '—';
+        if (!deadline || deadline === '—') return '';
         const isoDate = String(deadline).match(/^(\d{4})-(\d{2})-(\d{2})$/);
         return isoDate ? `${isoDate[3]}.${isoDate[2]}.${isoDate[1]}` : deadline;
       };
@@ -250,7 +258,7 @@ module.exports = async (req, res) => {
       const firstSheetId = firstSheet.sheetId;
 
       const teamMembers = await db.collection('team_members')
-        .find({}, { projection: { _id: 0, displayName: 1, telegramFirstName: 1, telegramLastName: 1, telegramUsername: 1, team: 1 } })
+        .find({}, { projection: { _id: 0, telegramId: 1, displayName: 1, telegramFirstName: 1, telegramLastName: 1, telegramUsername: 1, team: 1 } })
         .toArray();
 
       const formatMemberLabel = (member) => {
@@ -258,6 +266,28 @@ module.exports = async (req, res) => {
         const telegramName = [member.telegramFirstName, member.telegramLastName].filter(Boolean).join(' ');
         return member.telegramUsername ? `${telegramName || 'Пользователь'} · @${member.telegramUsername}` : telegramName || 'Пользователь';
       };
+
+      const resolveMemberLabel = (value) => {
+        if (!value || value === '—') return '—';
+        const member = teamMembers.find((item) => {
+          const telegramName = [item.telegramFirstName, item.telegramLastName].filter(Boolean).join(' ');
+          const aliases = [
+            formatMemberLabel(item),
+            item.displayName,
+            item.telegramFirstName,
+            telegramName,
+            item.telegramUsername ? `@${item.telegramUsername}` : '',
+            `Сотрудник [${item.telegramId}]`
+          ];
+          return aliases.filter(Boolean).includes(value);
+        });
+        return member ? formatMemberLabel(member) : value;
+      };
+
+      rows.forEach((row) => {
+        row[2] = resolveMemberLabel(row[2]);
+        row[3] = resolveMemberLabel(row[3]);
+      });
 
       // Старые значения включены временно, чтобы ранее созданные задачи не стали
       // невалидными в dropdown до полного перехода на справочник.
