@@ -313,39 +313,47 @@ module.exports = async (req, res) => {
         range: `${firstSheetName}!A2:Z1000`
       });
 
-      // Записываем задачи, начиная строго со второй строки.
-      if (rows.length) {
-        await sheets.spreadsheets.values.update({
-          spreadsheetId,
-          range: `${firstSheetName}!A2`,
-          valueInputOption: 'RAW',
-          resource: { values: rows }
-        });
-      }
-
-      // Dropdown для статуса, автора и исполнителя — со второй строки и ниже.
+      // Применяем настройки столбцов ДО записи данных, чтобы Google не auto-detect'ил типы.
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
         resource: {
           requests: [
+            // Принудительно задаём текстовый формат столбцу дат (E)
+            {
+              repeatCell: {
+                range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 4, endColumnIndex: 5 },
+                cell: {
+                  userEnteredFormat: {
+                    numberFormat: {
+                      type: 'TEXT'
+                    }
+                  }
+                },
+                fields: 'userEnteredFormat.numberFormat'
+              }
+            },
+            // Dropdown для статуса
             {
               setDataValidation: {
                 range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 1, endColumnIndex: 2 },
                 rule: dropdownRule(Object.values(statusLabels), 'Выберите статус задачи.')
               }
             },
+            // Dropdown для автора
             {
               setDataValidation: {
                 range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 2, endColumnIndex: 3 },
                 rule: dropdownRule(memberOptions, 'Выберите автора из справочника.')
               }
             },
+            // Dropdown для исполнителя
             {
               setDataValidation: {
                 range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 3, endColumnIndex: 4 },
                 rule: dropdownRule(memberOptions, 'Выберите исполнителя из справочника.')
               }
             },
+            // Dropdown для приоритета
             {
               setDataValidation: {
                 range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 5, endColumnIndex: 6 },
@@ -355,6 +363,16 @@ module.exports = async (req, res) => {
           ]
         }
       });
+
+      // Записываем задачи, начиная строго со второй строки.
+      if (rows.length) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `${firstSheetName}!A2`,
+          valueInputOption: 'RAW',
+          resource: { values: rows }
+        });
+      }
 
       return res.status(200).json({ success: true });
     }
