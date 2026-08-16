@@ -313,26 +313,12 @@ module.exports = async (req, res) => {
         range: `${firstSheetName}!A2:Z1000`
       });
 
-      // 1. Сначала — текстовый формат для ВСЕХ столбцов (чтобы Google не auto-detect'ил типы)
-      // 2. Потом — dropdown
-      // 3. В конце — данные
+            // Применяем dropdown сразу после clear — столбцы ещё не "typed"
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
         resource: {
           requests: [
-            // Текстовый формат для всех рабочих столбцов
-            {
-              repeatCell: {
-                range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: 6 },
-                cell: {
-                  userEnteredFormat: {
-                    numberFormat: { type: 'TEXT' }
-                  }
-                },
-                fields: 'userEnteredFormat.numberFormat'
-              }
-            },
-            // Dropdown для статуса
+            // Dropdown для статуса (строки 2-1000)
             {
               setDataValidation: {
                 range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 1, endColumnIndex: 2 },
@@ -363,6 +349,16 @@ module.exports = async (req, res) => {
           ]
         }
       });
+
+      // Записываем задачи
+      if (rows.length) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `${firstSheetName}!A2`,
+          valueInputOption: 'RAW',
+          resource: { values: rows }
+        });
+      }
 
       // Записываем задачи
       if (rows.length) {
