@@ -313,33 +313,39 @@ module.exports = async (req, res) => {
         range: `${firstSheetName}!A2:Z1000`
       });
 
-            // Применяем dropdown сразу после clear — столбцы ещё не "typed"
+      // Записываем задачи, начиная строго со второй строки.
+      if (rows.length) {
+        await sheets.spreadsheets.values.update({
+          spreadsheetId,
+          range: `${firstSheetName}!A2`,
+          valueInputOption: 'RAW',
+          resource: { values: rows }
+        });
+      }
+
+      // Dropdown для статуса, автора и исполнителя — со второй строки и ниже.
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
         resource: {
           requests: [
-            // Dropdown для статуса (строки 2-1000)
             {
               setDataValidation: {
                 range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 1, endColumnIndex: 2 },
                 rule: dropdownRule(Object.values(statusLabels), 'Выберите статус задачи.')
               }
             },
-            // Dropdown для автора
             {
               setDataValidation: {
                 range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 2, endColumnIndex: 3 },
                 rule: dropdownRule(memberOptions, 'Выберите автора из справочника.')
               }
             },
-            // Dropdown для исполнителя
             {
               setDataValidation: {
                 range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 3, endColumnIndex: 4 },
                 rule: dropdownRule(memberOptions, 'Выберите исполнителя из справочника.')
               }
             },
-            // Dropdown для приоритета
             {
               setDataValidation: {
                 range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 5, endColumnIndex: 6 },
@@ -349,26 +355,6 @@ module.exports = async (req, res) => {
           ]
         }
       });
-
-      // Записываем задачи
-      if (rows.length) {
-        await sheets.spreadsheets.values.update({
-          spreadsheetId,
-          range: `${firstSheetName}!A2`,
-          valueInputOption: 'RAW',
-          resource: { values: rows }
-        });
-      }
-
-      // Записываем задачи
-      if (rows.length) {
-        await sheets.spreadsheets.values.update({
-          spreadsheetId,
-          range: `${firstSheetName}!A2`,
-          valueInputOption: 'RAW',
-          resource: { values: rows }
-        });
-      }
 
       return res.status(200).json({ success: true });
     }
