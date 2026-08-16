@@ -313,20 +313,20 @@ module.exports = async (req, res) => {
         range: `${firstSheetName}!A2:Z1000`
       });
 
-      // Применяем настройки столбцов ДО записи данных, чтобы Google не auto-detect'ил типы.
+      // 1. Сначала — текстовый формат для ВСЕХ столбцов (чтобы Google не auto-detect'ил типы)
+      // 2. Потом — dropdown
+      // 3. В конце — данные
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
         resource: {
           requests: [
-            // Принудительно задаём текстовый формат столбцу дат (E)
+            // Текстовый формат для всех рабочих столбцов
             {
               repeatCell: {
-                range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 4, endColumnIndex: 5 },
+                range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 0, endColumnIndex: 6 },
                 cell: {
                   userEnteredFormat: {
-                    numberFormat: {
-                      type: 'TEXT'
-                    }
+                    numberFormat: { type: 'TEXT' }
                   }
                 },
                 fields: 'userEnteredFormat.numberFormat'
@@ -364,7 +364,7 @@ module.exports = async (req, res) => {
         }
       });
 
-      // Записываем задачи, начиная строго со второй строки.
+      // Записываем задачи
       if (rows.length) {
         await sheets.spreadsheets.values.update({
           spreadsheetId,
