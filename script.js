@@ -273,57 +273,99 @@ function renderBoard() {
     listElement.innerHTML = '';
 
     columns[status].forEach(function(task) {
-      const card = document.createElement('div');
-      card.className = 'task-card priority-' + task.priority;
-      card.draggable = true;
-      card.ondragstart = function(event) {
-        event.dataTransfer.setData('text/plain', task.id);
-      };
-
-      const taskText = document.createElement('div');
-      taskText.className = 'task-text';
-      taskText.innerText = task.text;
-
-      card.style.cursor = 'pointer';
-      card.onclick = function(event) {
-        if (event.target === taskDelete || taskDelete.contains(event.target)) {
-          return;
-        }
-        openEditTask(task.id);
-      };
-
-      const taskDelete = document.createElement('button');
-      taskDelete.className = 'task-delete';
-      taskDelete.type = 'button';
-      taskDelete.title = 'Удалить задачу';
-      taskDelete.setAttribute('aria-label', 'Удалить задачу');
-      taskDelete.innerText = '×';
-      taskDelete.draggable = false;
-      taskDelete.onclick = function(event) {
-        event.stopPropagation();
-        deleteTask(task.id, taskDelete);
-      };
-
-      const taskHeader = document.createElement('div');
-      taskHeader.className = 'task-header';
-      taskHeader.appendChild(taskText);
-      taskHeader.appendChild(taskDelete);
-
-      const taskAuthor = document.createElement('div');
-      taskAuthor.className = 'task-meta';
-      taskAuthor.innerText = 'От: ' + task.author + ' | Исполнитель: ' + (task.executor || '—');
-
-      const taskDeadline = document.createElement('div');
-      taskDeadline.className = 'task-deadline';
-      taskDeadline.innerText =
-        getDeadlineLabel(task.deadline) + ': ' + formatDeadlineDisplay(task.deadline);
-
-      card.appendChild(taskHeader);
-      card.appendChild(taskAuthor);
-      card.appendChild(taskDeadline);
+      const card = createTaskCard(task);
       listElement.appendChild(card);
     });
   }
+}
+
+// ============================================================
+// Создание карточки задачи (новый формат)
+// ============================================================
+function createTaskCard(task) {
+  const card = document.createElement('div');
+  card.className = 'task-card priority-' + task.priority;
+  card.draggable = true;
+  card.ondragstart = function(event) {
+    event.dataTransfer.setData('text/plain', task.id);
+  };
+
+  // Цветная полоска статуса
+  const statusBar = document.createElement('div');
+  statusBar.className = 'task-status-bar';
+  card.appendChild(statusBar);
+
+  // Контент карточки
+  const content = document.createElement('div');
+  content.className = 'task-card-content';
+
+  // Заголовок: номер задачи + кнопка удаления
+  const header = document.createElement('div');
+  header.className = 'task-header';
+
+  const number = document.createElement('div');
+  number.className = 'task-number';
+  number.innerText = task.id || '—';
+  header.appendChild(number);
+
+  const taskDelete = document.createElement('button');
+  taskDelete.className = 'task-delete';
+  taskDelete.type = 'button';
+  taskDelete.title = 'Удалить задачу';
+  taskDelete.setAttribute('aria-label', 'Удалить задачу');
+  taskDelete.draggable = false;
+  taskDelete.onclick = function(event) {
+    event.stopPropagation();
+    deleteTask(task.id, taskDelete);
+  };
+  // SVG крестик
+  taskDelete.innerHTML = '<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.50015 4.49985L4.49991 7.50009M4.49991 4.49985L7.50015 7.50009M11.0004 5.99997C11.0004 8.76162 8.76168 11.0004 6.00003 11.0004C3.23839 11.0004 0.999634 8.76162 0.999634 5.99997C0.999634 3.23833 3.23839 0.999573 6.00003 0.999573C8.76168 0.999573 11.0004 3.23833 11.0004 5.99997Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  header.appendChild(taskDelete);
+  content.appendChild(header);
+
+  // Метаданные
+  const metaGroup = document.createElement('div');
+  metaGroup.className = 'task-meta-group';
+
+  // Исполнитель
+  const executorRow = document.createElement('div');
+  executorRow.className = 'task-meta-row';
+  const executorLabel = document.createElement('span');
+  executorLabel.className = 'task-meta-label';
+  executorLabel.innerText = 'Исполнитель:';
+  executorRow.appendChild(executorLabel);
+  const executorValue = document.createElement('span');
+  executorValue.className = 'task-meta-value';
+  executorValue.innerText = task.executor || '—';
+  executorRow.appendChild(executorValue);
+  metaGroup.appendChild(executorRow);
+
+  // Срок
+  const deadlineRow = document.createElement('div');
+  deadlineRow.className = 'task-meta-row';
+  const deadlineLabel = document.createElement('span');
+  deadlineLabel.className = 'task-meta-label';
+  deadlineLabel.innerText = 'Срок:';
+  deadlineRow.appendChild(deadlineLabel);
+  const deadlineValue = document.createElement('span');
+  deadlineValue.className = 'task-meta-value';
+  deadlineValue.innerText = formatDeadlineDisplay(task.deadline);
+  deadlineRow.appendChild(deadlineValue);
+  metaGroup.appendChild(deadlineRow);
+
+  content.appendChild(metaGroup);
+  card.appendChild(content);
+
+  // Клик по карточке — редактирование
+  card.style.cursor = 'pointer';
+  card.onclick = function(event) {
+    if (event.target.closest('.task-delete')) {
+      return;
+    }
+    openEditTask(task.id);
+  };
+
+  return card;
 }
 
 // ============================================================

@@ -62,11 +62,100 @@
       margin-bottom: 12px;
     }
 
-    .header-main {
+    @media (min-width: 600px) {
+      header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+    }
+
+    .header-top {
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+
+    @media (min-width: 600px) {
+      .header-top {
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+      }
+    }
+
+    .header-bottom {
+      display: flex;
+      justify-content: flex-end;
       align-items: center;
       gap: 8px;
+      width: 100%;
+    }
+
+    @media (min-width: 600px) {
+      .header-bottom {
+        width: auto;
+      }
+    }
+
+    .header-middle {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    @media (min-width: 600px) {
+      .header-middle {
+        font-size: 18px;
+      }
+    }
+
+    @media (min-width: 600px) {
+      header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+    }
+
+    .header-top {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
+    @media (min-width: 600px) {
+      .header-top {
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+      }
+    }
+
+    .header-middle {
+      width: 100%;
+    }
+
+    @media (min-width: 600px) {
+      .header-middle {
+        width: auto;
+      }
+    }
+
+    .header-bottom {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      width: 100%;
+    }
+
+    @media (min-width: 600px) {
+      .header-bottom {
+        width: auto;
+      }
     }
 
     h2 {
@@ -131,6 +220,7 @@
       border-radius: 8px;
       border: 1px solid var(--border-color);
       background: var(--tg-theme-bg-color);
+      flex-shrink: 0;
     }
 
     .view-switcher button {
@@ -142,6 +232,9 @@
       font-size: 13px;
       border: none;
       box-shadow: none;
+      height: 32px;
+      display: flex;
+      align-items: center;
     }
 
     .view-switcher button.is-active {
@@ -372,6 +465,33 @@
       background: var(--tg-theme-secondary-bg-color);
       overflow: hidden;
       cursor: grab;
+      position: relative;
+    }
+
+    .task-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      border-radius: 8px 0 0 8px;
+    }
+
+    .task-card.priority-low::before {
+      background: #2EC4B6;
+    }
+
+    .task-card.priority-medium::before {
+      background: #3F78FF;
+    }
+
+    .task-card.priority-high::before {
+      background: #FF9F2D;
+    }
+
+    .task-card.priority-critical::before {
+      background: #FF4D4D;
     }
 
     .task-card:active {
@@ -779,60 +899,52 @@
   <div id="app">
 
     <header>
-
-      <h2 id="user-greeting">
+      <div class="header-top">
+        <div class="view-switcher">
+          <button
+            type="button"
+            id="view-board"
+            class="is-active"
+            onclick="switchView('board')"
+          >
+            Доска
+          </button>
+          <button
+            type="button"
+            id="view-list"
+            onclick="switchView('list')"
+          >
+            Список
+          </button>
+        </div>
+        <div class="header-bottom">
+          <button
+            type="button"
+            class="btn-primary"
+            onclick="openTaskForm()"
+          >
+            +
+            Задача
+          </button>
+          <button
+            type="button"
+            id="excel-export-btn"
+            class="btn-secondary"
+            onclick="exportToExcel()"
+            title="Экспорт в Google Sheets"
+          >
+            <span class="excel-icon">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="6" cy="6" r="2.5"/>
+              </svg>
+            </span>
+            Sync
+          </button>
+        </div>
+      </div>
+      <h2 id="user-greeting" class="header-middle">
         Загрузка...
       </h2>
-
-      <div class="view-switcher">
-        <button
-          type="button"
-          id="view-board"
-          class="is-active"
-          onclick="switchView('board')"
-        >
-          Доска
-        </button>
-        <button
-          type="button"
-          id="view-list"
-          onclick="switchView('list')"
-        >
-          Список
-        </button>
-      </div>
-
-      <div class="header-buttons">
-
-        <button
-          type="button"
-          class="btn-primary"
-          onclick="openTaskForm()"
-        >
-          + Задача
-        </button>
-
-        <button
-          type="button"
-          id="excel-export-btn"
-          class="btn-secondary"
-          onclick="exportToExcel()"
-          title="Экспорт в Google Sheets"
-        >
-          <span class="excel-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
-          </span>
-          <span class="excel-text">Excel</span>
-        </button>
-
-      </div>
-
     </header>
 
 
