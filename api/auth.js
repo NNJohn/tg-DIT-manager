@@ -384,18 +384,21 @@ module.exports = async (req, res) => {
         updatedCount++;
       }
 
-      // Вставляем новые
+      // Вставляем новые — после этого нужно пересчитать rows для экспорта
       if (toInsert.length > 0) {
         await collection.insertMany(toInsert);
         insertedCount = toInsert.length;
       }
+
+      // Перечитываем актуальные задачи из БД
+      const currentDbTasks = await collection.find({}).toArray();
 
       // ============================================================
       // ПРЯМОЙ ЭКСПОРТ: MongoDB → Sheets
       // ============================================================
       const rows = [];
 
-      dbTasks.forEach(t => {
+      currentDbTasks.forEach(t => {
         rows.push([
           t.text,
           statusLabels[t.status] || 'Беклог',
