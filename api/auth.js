@@ -90,7 +90,7 @@ module.exports = async (req, res) => {
 
       if (req.body.action === 'list_team_members') {
         const members = await teamMembers
-          .find({}, { projection: { _id: 0, telegramId: 1, telegramFirstName: 1, telegramLastName: 1, telegramUsername: 1, displayName: 1, team: 1, registeredAt: 1 } })
+          .find({}, { projection: { _id: 0, telegramId: 1, telegramFirstName: 1, telegramLastName: 1, telegramUsername: 1, displayName: 1, registeredAt: 1 } })
           .sort({ registeredAt: -1 })
           .toArray();
         return res.status(200).json({ success: true, members });
@@ -116,20 +116,22 @@ module.exports = async (req, res) => {
         });
       }
 
-      const { telegramId, displayName, team } = req.body.member || {};
+      const { telegramId, displayName } = req.body.member || {};
       if (!/^\d+$/.test(String(telegramId || ''))) {
         return res.status(400).json({ error: 'Некорректный Telegram ID.' });
       }
 
       const normalizedDisplayName = String(displayName || '').trim();
-      const normalizedTeam = String(team || '').trim();
-      if (normalizedDisplayName.length > 100 || normalizedTeam.length > 100) {
-        return res.status(400).json({ error: 'Имя и команда не должны быть длиннее 100 символов.' });
+      if (normalizedDisplayName.length > 100) {
+        return res.status(400).json({ error: 'Имя не должно быть длиннее 100 символов.' });
       }
 
       const result = await teamMembers.updateOne(
         { telegramId: String(telegramId) },
-        { $set: { displayName: normalizedDisplayName, team: normalizedTeam, updatedAt: new Date() } }
+        {
+          $set: { displayName: normalizedDisplayName, updatedAt: new Date() },
+          $unset: { team: '' }
+        }
       );
       if (!result.matchedCount) {
         return res.status(404).json({ error: 'Пользователь не найден в справочнике.' });
@@ -263,11 +265,11 @@ module.exports = async (req, res) => {
       const sheetTable = (firstSheetData.tables || [])[0] || null;
 
       const teamMembers = await db.collection('team_members')
-        .find({}, { projection: { _id: 0, telegramId: 1, displayName: 1, telegramFirstName: 1, telegramLastName: 1, telegramUsername: 1, team: 1 } })
+        .find({}, { projection: { _id: 0, telegramId: 1, displayName: 1, telegramFirstName: 1, telegramLastName: 1, telegramUsername: 1 } })
         .toArray();
 
       const formatMemberLabel = (member) => {
-        if (member.displayName) return member.team ? `${member.displayName} · ${member.team}` : member.displayName;
+        if (member.displayName) return member.displayName;
         const telegramName = [member.telegramFirstName, member.telegramLastName].filter(Boolean).join(' ');
         return member.telegramUsername ? `${telegramName || 'Пользователь'} · @${member.telegramUsername}` : telegramName || 'Пользователь';
       };

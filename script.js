@@ -301,13 +301,6 @@ function renderTeamMembers(members) {
     displayName.placeholder = 'Отображаемое имя для экспорта';
     displayName.value = member.displayName || '';
 
-    const team = document.createElement('input');
-    team.id = 'member-team-' + member.telegramId;
-    team.type = 'text';
-    team.maxLength = 100;
-    team.placeholder = 'Команда или роль (необязательно)';
-    team.value = member.team || '';
-
     const saveButton = document.createElement('button');
     saveButton.type = 'button';
     saveButton.innerText = 'Сохранить';
@@ -317,7 +310,6 @@ function renderTeamMembers(members) {
 
     card.appendChild(info);
     card.appendChild(displayName);
-    card.appendChild(team);
     card.appendChild(saveButton);
     list.appendChild(card);
   });
@@ -363,14 +355,13 @@ async function createInvite() {
 
 async function saveTeamMember(telegramId, button) {
   const displayName = document.getElementById('member-display-' + telegramId).value;
-  const team = document.getElementById('member-team-' + telegramId).value;
   const originalText = button.innerText;
   button.disabled = true;
   button.innerText = 'Сохраняем…';
 
   try {
     await devRequest('update_team_member', {
-      member: { telegramId: telegramId, displayName: displayName, team: team }
+      member: { telegramId: telegramId, displayName: displayName }
     });
     button.innerText = 'Сохранено';
     setTimeout(function() {
