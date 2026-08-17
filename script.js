@@ -73,17 +73,23 @@ function switchView(mode) {
 // UI Функции управления экранами
 // ============================================================
 function showError(title, message) {
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('auth-status-screen').style.display = 'block';
-  document.getElementById('status-title').innerText = title;
-  document.getElementById('status-desc').innerText = message;
+  const app = document.getElementById('app');
+  const authScreen = document.getElementById('auth-status-screen');
+  const statusTitle = document.getElementById('status-title');
+  const statusDesc = document.getElementById('status-desc');
+  if (app) app.style.display = 'none';
+  if (authScreen) authScreen.style.display = 'block';
+  if (statusTitle) statusTitle.innerText = title;
+  if (statusDesc) statusDesc.innerText = message;
 }
 
 function showApp() {
-  document.getElementById('auth-status-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  document.getElementById('user-greeting').innerText =
-    'Привет, ' + currentUserName + '!';
+  const authScreen = document.getElementById('auth-status-screen');
+  const app = document.getElementById('app');
+  const userGreeting = document.getElementById('user-greeting');
+  if (authScreen) authScreen.style.display = 'none';
+  if (app) app.style.display = 'block';
+  if (userGreeting) userGreeting.innerText = 'Привет, ' + currentUserName + '!';
 }
 
 // ============================================================
@@ -181,8 +187,10 @@ async function authorize() {
     return false;
   }
 
-  document.getElementById('status-title').innerText = 'Проверка прав доступа...';
-  document.getElementById('status-desc').innerText = 'Проверяем ваш Telegram ID.';
+  const statusTitle = document.getElementById('status-title');
+  const statusDesc = document.getElementById('status-desc');
+  if (statusTitle) statusTitle.innerText = 'Проверка прав доступа...';
+  if (statusDesc) statusDesc.innerText = 'Проверяем ваш Telegram ID.';
 
   try {
     const response = await fetch(API_URL, {
@@ -244,7 +252,6 @@ async function authorize() {
     );
     return false;
   }
-  exportToExcel();
 }
 
 // ============================================================
@@ -276,7 +283,7 @@ function renderBoard() {
     const column = listElement.closest('.column');
     if (column) {
       const countBadge = column.querySelector('.count-badge');
-      if (countBadge) {
+      if (countBadge && typeof countBadge.textContent !== 'undefined') {
         countBadge.textContent = columns[status].length;
       }
     }
@@ -426,6 +433,8 @@ function getMemberTelegramName(member) {
 
 function renderTeamMembers(members) {
   const list = document.getElementById('team-members');
+  if (!list) return;
+
   list.innerHTML = '';
 
   if (!members.length) {
@@ -467,6 +476,7 @@ async function loadTeamMembers() {
   if (!isDeveloper) return;
 
   const list = document.getElementById('team-members');
+  if (!list) return;
   list.innerText = 'Загрузка справочника…';
   try {
     const result = await devRequest('list_team_members');
@@ -588,16 +598,20 @@ function openEditTask(taskId) {
   editingTaskId = task.id;
 
   // Устанавливаем заголовок
-  document.getElementById('modal-title').innerText = 'Редактировать задачу';
+  const modalTitle = document.getElementById('modal-title');
+  if (modalTitle) modalTitle.innerText = 'Редактировать задачу';
 
   // Заполняем поля
-  document.getElementById('form-text').value = task.text || '';
+  const textInput = document.getElementById('form-text');
+  if (textInput) textInput.value = task.text || '';
   
   const executorInput = document.getElementById('form-executor');
-  executorInput.value = task.executor || '';
+  if (executorInput) executorInput.value = task.executor || '';
   
-  document.getElementById('form-status').value = task.status || 'todo';
-  document.getElementById('form-priority').value = task.priority || 'medium';
+  const statusInput = document.getElementById('form-status');
+  if (statusInput) statusInput.value = task.status || 'todo';
+  const priorityInput = document.getElementById('form-priority');
+  if (priorityInput) priorityInput.value = task.priority || 'medium';
   
   // Заполняем заметки
   const notesInput = document.getElementById('form-notes');
@@ -617,11 +631,15 @@ function openEditTask(taskId) {
 }
 
 function saveTask() {
-  const text = document.getElementById('form-text').value.trim();
-  const executor = document.getElementById('form-executor').value;
+  const textInput = document.getElementById('form-text');
+  const text = textInput ? textInput.value.trim() : '';
+  const executorInput = document.getElementById('form-executor');
+  const executor = executorInput ? executorInput.value : '';
   const deadline = getTaskDeadlineValue();
-  const status = document.getElementById('form-status').value;
-  const priority = document.getElementById('form-priority').value;
+  const statusInput = document.getElementById('form-status');
+  const status = statusInput ? statusInput.value : 'todo';
+  const priorityInput = document.getElementById('form-priority');
+  const priority = priorityInput ? priorityInput.value : 'medium';
   const notes = getNotesFromForm();
 
   if (!text) {
@@ -1018,7 +1036,7 @@ async function initApplication() {
     );
     return;
   }
-  
+
   applyTelegramTheme();
   switchView(currentView);
 
