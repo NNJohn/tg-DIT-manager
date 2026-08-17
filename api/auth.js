@@ -176,6 +176,34 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true, task: newTask });
     }
 
+    // МАРШРУТ 2b: Обновление задачи (редактирование из модалки)
+    if (req.method === 'POST' && req.body.action === 'update') {
+      const validStatuses = ['todo', 'progress', 'blocked', 'done', 'cancelled'];
+      const validPriorities = ['low', 'medium', 'high', 'critical'];
+      const { taskId } = req.body;
+      if (!taskId) {
+        return res.status(400).json({ error: 'Не указан ID задачи.' });
+      }
+
+      const updateFields = {};
+      if (req.body.task) {
+        updateFields.text = req.body.task.text || '—';
+        updateFields.status = validStatuses.includes(req.body.task.status) ? req.body.task.status : 'todo';
+        updateFields.executor = req.body.task.executor || '—';
+        updateFields.deadline = req.body.task.deadline || '—';
+        updateFields.priority = validPriorities.includes(req.body.task.priority) ? req.body.task.priority : 'medium';
+      }
+      updateFields.updatedAt = new Date();
+
+      const result = await collection.updateOne({ id: taskId }, { $set: updateFields });
+      if (!result.matchedCount) {
+        return res.status(404).json({ error: 'Задача не найдена.' });
+      }
+
+      const updatedTask = await collection.findOne({ id: taskId });
+      return res.status(200).json({ success: true, task: updatedTask });
+    }
+
     // МАРШРУТ 3: Изменение статуса задачи (Drag & Drop)
     if (req.method === 'PUT') {
       const { taskId, newStatus } = req.body;
