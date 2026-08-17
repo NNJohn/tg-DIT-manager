@@ -434,9 +434,9 @@ function deleteTask(taskId, button) {
 
     try {
       const response = await fetch(API_URL, {
-        method: 'DELETE',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData: tg.initData, taskId: taskId })
+        body: JSON.stringify({ initData: tg.initData, action: 'delete_task', taskId: taskId })
       });
       const result = await response.json();
 
@@ -785,6 +785,29 @@ async function drop(event, newStatus) {
 // ============================================================
 // Excel Экспорт и синхронизация с Google Sheets
 // ============================================================
+function showSyncIndicator(success) {
+  const excelBtn = document.getElementById('excel-export-btn');
+  if (!excelBtn) return;
+  
+  // Убираем старые индикаторы
+  excelBtn.classList.remove('excel-syncing', 'excel-success', 'excel-error');
+  
+  // Создаём индикатор если нет
+  let indicator = excelBtn.querySelector('.sync-indicator');
+  if (!indicator) {
+    indicator = document.createElement('span');
+    indicator.className = 'sync-indicator';
+    excelBtn.appendChild(indicator);
+  }
+  
+  // Ставим соответствующий класс
+  excelBtn.classList.add(success ? 'excel-success' : 'excel-error');
+  
+  setTimeout(function() {
+    excelBtn.classList.remove('excel-success', 'excel-error');
+  }, 3000);
+}
+
 async function exportToExcel() {
   if (!tg) return;
 
@@ -806,27 +829,14 @@ async function exportToExcel() {
     if (response.ok && result.success) {
       // Переинициализируем задачи с сервера после синхронизации
       await reloadTasks();
-      
-      let message = 'Данные синхронизированы!';
-      if (result.syncStats) {
-        const { inserted, updated, totalTasks } = result.syncStats;
-        const parts = [];
-        if (inserted > 0) parts.push(`+${inserted} новых из Sheets`);
-        if (updated > 0) parts.push(`обновлено ${updated} задач`);
-        parts.push(`всего задач: ${totalTasks}`);
-        message = parts.join('\n');
-      }
-      
-      tg.showPopup({
-        title: 'Успешно',
-        message: message,
-        buttons: [{ type: 'ok' }]
-      });
+      showSyncIndicator(true);
     } else {
-      alert(result.error || "Сбой синхронизации");
+      showSyncIndicator(false);
+      console.error('Ошибка синхронизации:', result.error);
     }
   } catch (e) {
-    alert("Ошибка соединения с сервером.");
+    showSyncIndicator(false);
+    console.error('Ошибка соединения:', e);
   } finally {
     if (excelBtn) {
       excelBtn.classList.remove('excel-syncing');
@@ -854,6 +864,29 @@ async function reloadTasks() {
     }
   } catch (error) {
     console.error('Ошибка перезагрузки задач:', error);
+  }
+}
+
+// ============================================================
+// Автоматическая синхронизация при загрузке
+// ============================================================
+async function autoSyncOnStart() {
+  // Синхронизируем только если задача уже была создана
+  if (tasks.length === 0) return;
+  
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        initData: tg.initData,
+        action: 'sync_google'
+      })
+    });
+    // После синхронизации перезагружаем задачи
+    await reloadTasks();
+  } catch (error) {
+    console.log('Авто-синхронизация пропущена:', error.message);
   }
 }
 
