@@ -562,6 +562,9 @@ async function saveNewTask(text, executor, deadline, status, priority, notes) {
   tasks.push(result.task);
   renderBoard();
   closeTaskForm();
+  
+  // Авто-синхронизация после создания задачи
+  exportToExcel();
 }
 
 async function updateExistingTask(text, executor, deadline, status, priority, notes) {
