@@ -70,16 +70,17 @@ function populateExecutors(usersWhitelist) {
   selectEl.appendChild(meOption);
 
   // 2. Следом добавляем остальных участников из вайтлиста бэкенда
+  //    Бэкенд уже подставляет читаемые имена, поэтому используем значения напрямую
   if (usersWhitelist && Array.isArray(usersWhitelist)) {
-    usersWhitelist.forEach(function(userId) {
-      // Исключаем дублирование вас в списке по ID, если бэкенд его вернул
-      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user && String(tg.initDataUnsafe.user.id) === String(userId)) {
+    usersWhitelist.forEach(function(userName) {
+      // Исключаем текущее пользователя (отображается первым)
+      if (String(userName).includes(currentUserName)) {
         return;
       }
       
       const option = document.createElement('option');
-      option.value = "Сотрудник [" + userId + "]";
-      option.innerText = "Сотрудник [" + userId + "]";
+      option.value = userName;
+      option.innerText = userName;
       selectEl.appendChild(option);
     });
   }

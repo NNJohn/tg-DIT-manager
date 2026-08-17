@@ -73,11 +73,26 @@ module.exports = async (req, res) => {
         { projection: { _id: 0, displayName: 1 } }
       );
       const dbTasks = await collection.find({}).toArray();
+
+      // Формируем список исполнителей с читаемыми именами
+      const whitelistMembers = await teamMembers
+        .find({ telegramId: { $in: allowedUsers.map(String) } }, { projection: { _id: 0, telegramId: 1, displayName: 1, telegramFirstName: 1, telegramLastName: 1, telegramUsername: 1 } })
+        .toArray();
+
+      const usersWhitelist = allowedUsers.map(allowedId => {
+        const member = whitelistMembers.find(m => m.telegramId === String(allowedId));
+        if (member) {
+          const name = [member.displayName || member.telegramFirstName, member.telegramLastName].filter(Boolean).join(' ');
+          return name || 'Сотрудник ' + allowedId;
+        }
+        return 'Сотрудник ' + allowedId;
+      });
+
       return res.status(200).json({
         success: true,
         userName: currentMember && currentMember.displayName ? currentMember.displayName : realName,
         tasks: dbTasks,
-        usersWhitelist: allowedUsers,
+        usersWhitelist,
         isDeveloper
       });
     }
