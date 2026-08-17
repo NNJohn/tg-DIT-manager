@@ -97,21 +97,11 @@
       flex-shrink: 0;
       box-sizing: border-box;
       overflow: hidden;
+      border: 1px solid var(--border-color);
     }
 
-    #excel-export-btn {
-      padding: 0 !important;
-      min-width: 32px !important;
-      min-height: 32px !important;
-      max-width: 32px !important;
-      max-height: 32px !important;
-      box-sizing: border-box !important;
-      overflow: hidden !important;
-    }
-
-    .btn-secondary svg {
-      width: 14px;
-      height: 14px;
+    .btn-secondary:hover {
+      border-color: var(--tg-theme-hint-color);
     }
 
     .view-switcher {
@@ -120,6 +110,7 @@
       align-items: flex-start;
       border-radius: 8px;
       background: var(--tg-theme-bg-color);
+      border: 1px solid var(--border-color);
       flex-shrink: 0;
     }
 
@@ -157,17 +148,6 @@
       gap: 8px;
       flex-shrink: 0;
       align-items: center;
-    }
-
-    #excel-export-btn {
-      width: auto;
-      height: auto;
-      padding: 4px 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      position: relative;
     }
 
     #excel-export-btn .excel-icon {
@@ -239,17 +219,6 @@
       display: none;
     }
 
-    .column {
-      background-color: #13151A;
-      border-radius: var(--radius-md);
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      flex: 1;
-      min-width: 0;
-    }
-
     @media (min-width: 600px) {
       .board {
         flex-direction: row;
@@ -283,45 +252,6 @@
         min-width: 280px;
         max-width: 280px;
       }
-    }
-
-    @media (min-width: 600px) {
-      .board {
-        flex-direction: row;
-        gap: 8px;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
-        padding-bottom: 8px;
-      }
-
-      .board::-webkit-scrollbar {
-        height: 6px;
-      }
-
-      .board::-webkit-scrollbar-track {
-        background: var(--tg-theme-secondary-bg-color);
-        border-radius: 3px;
-      }
-
-      .board::-webkit-scrollbar-thumb {
-        background: var(--border-color);
-        border-radius: 3px;
-      }
-
-      .board::-webkit-scrollbar-thumb:hover {
-        background: var(--tg-theme-hint-color);
-      }
-
-      .column {
-        flex: 0 0 280px;
-        min-width: 280px;
-        max-width: 280px;
-      }
-    }
-
-    .column {
-      flex: 1;
     }
 
     #list-view {
@@ -331,6 +261,7 @@
       background-color: #0A0B0E;
       border-radius: var(--radius-md);
       padding: 12px;
+      border: 1px solid var(--border-color);
     }
 
     #list-view.active {
@@ -348,8 +279,9 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      flex: 0 0 100%;
+      flex: 1;
       min-width: 0;
+      border: 1px solid var(--border-color);
     }
 
     .column-header {
@@ -357,6 +289,7 @@
       padding-bottom: 8px;
       justify-content: space-between;
       align-items: center;
+      border-bottom: 1px solid var(--border-color);
     }
 
     .column-header-left {
@@ -444,6 +377,7 @@
       display: flex;
       align-items: flex-start;
       border-radius: 8px;
+      border: 1px solid var(--border-color);
       background: var(--tg-theme-secondary-bg-color);
       overflow: hidden;
       cursor: grab;
@@ -759,6 +693,7 @@
       padding: 3px;
       border-radius: var(--radius-sm);
       background: var(--tg-theme-secondary-bg-color);
+      border: 1px solid var(--border-color);
       gap: 3px;
     }
 
@@ -786,6 +721,7 @@
       background-color: var(--tg-theme-bg-color);
       border-radius: var(--radius-md);
       padding: 12px;
+      border: 1px solid var(--border-color);
     }
 
     .devtools summary {
@@ -1191,7 +1127,7 @@
        в Telegram WebView после нового deployment.
        ======================================================== -->
 
-  <script src="./script.js?v=20260817-14"></script>
+  <script src="./script.js?v=20260817-15"></script>
 
 </body>
 </html>
