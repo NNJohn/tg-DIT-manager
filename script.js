@@ -308,14 +308,17 @@ function createTaskCard(task) {
   const content = document.createElement('div');
   content.className = 'task-card-content';
 
-  // Заголовок: номер задачи + кнопка удаления
+  // Заголовок: текст задачи + кнопка удаления
   const header = document.createElement('div');
   header.className = 'task-header';
 
-  const number = document.createElement('div');
-  number.className = 'task-number';
-  number.innerText = task.id || '—';
-  header.appendChild(number);
+  const text = document.createElement('div');
+  text.className = 'task-number';
+  text.style.maxWidth = 'calc(100% - 32px)';
+  text.style.whiteSpace = 'pre-wrap';
+  text.style.wordBreak = 'break-word';
+  text.innerText = task.text || '';
+  header.appendChild(text);
 
   const taskDelete = document.createElement('button');
   taskDelete.className = 'task-delete';
@@ -327,8 +330,8 @@ function createTaskCard(task) {
     event.stopPropagation();
     deleteTask(task.id, taskDelete);
   };
-  // SVG крестик
-  taskDelete.innerHTML = '<svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.50015 4.49985L4.49991 7.50009M4.49991 4.49985L7.50015 7.50009M11.0004 5.99997C11.0004 8.76162 8.76168 11.0004 6.00003 11.0004C3.23839 11.0004 0.999634 8.76162 0.999634 5.99997C0.999634 3.23833 3.23839 0.999573 6.00003 0.999573C8.76168 0.999573 11.0004 3.23833 11.0004 5.99997Z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  // SVG крестик 16x16
+  taskDelete.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4L12 12M12 4L4 12M8 1.333C4.309 1.333 1.333 4.309 1.333 8C1.333 11.691 4.309 14.667 8 14.667C11.691 14.667 14.667 11.691 14.667 8C14.667 4.309 11.691 1.333 8 1.333Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
   header.appendChild(taskDelete);
   content.appendChild(header);
 

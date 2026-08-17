@@ -93,90 +93,6 @@
       }
     }
 
-    .header-middle {
-      font-size: 18px;
-      font-weight: 700;
-    }
-
-    @media (min-width: 600px) {
-      .header-middle {
-        font-size: 18px;
-      }
-    }
-
-    @media (min-width: 600px) {
-      header {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-      }
-    }
-
-    .header-top {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      width: 100%;
-    }
-
-    @media (min-width: 600px) {
-      .header-top {
-        flex-direction: row;
-        align-items: center;
-        gap: 12px;
-      }
-    }
-
-    .header-middle {
-      width: 100%;
-    }
-
-    @media (min-width: 600px) {
-      .header-middle {
-        width: auto;
-      }
-    }
-
-    .header-bottom {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      width: 100%;
-    }
-
-    @media (min-width: 600px) {
-      .header-bottom {
-        width: auto;
-      }
-    }
-
-    h2 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 700;
-    }
-
-    button {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      transition: opacity 0.15s ease, transform 0.1s ease;
-    }
-
-    button:active {
-      opacity: 0.85;
-      transform: scale(0.98);
-    }
-
-    button:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-      transform: none;
-    }
-
     .btn-primary {
       background-color: var(--tg-theme-button-color);
       color: var(--tg-theme-button-text-color);
@@ -198,15 +114,23 @@
     .btn-secondary {
       background-color: var(--tg-theme-secondary-bg-color);
       color: var(--tg-theme-hint-color);
-      padding: 6px 10px;
+      padding: 0;
       border-radius: 8px;
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      gap: 0;
       border: 1px solid var(--border-color);
       font-size: 13px;
       height: 32px;
+      width: 32px;
+      flex-shrink: 0;
+    }
+
+    .btn-secondary svg {
+      width: 14px;
+      height: 14px;
     }
 
     .view-switcher {
@@ -471,7 +395,6 @@
       top: 0;
       bottom: 0;
       width: 3px;
-      border-radius: 8px 0 0 8px;
     }
 
     .task-card.priority-low::before {
@@ -495,7 +418,7 @@
     }
 
     .task-status-bar {
-      width: 4px;
+      width: 3px;
       align-self: stretch;
       flex-shrink: 0;
     }
@@ -548,23 +471,23 @@
       color: #565D68;
       font-size: 14px;
       line-height: 1;
-      padding: 2px 4px;
+      padding: 4px;
       flex-shrink: 0;
-      border-radius: 4px;
+      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 16px;
-      height: 16px;
+      width: 24px;
+      height: 24px;
     }
 
     .task-delete:hover {
-      background: rgba(142, 148, 160, 0.1);
+      background: rgba(142, 148, 160, 0.15);
     }
 
     .task-delete svg {
-      width: 12px;
-      height: 12px;
+      width: 16px;
+      height: 16px;
       stroke: #565D68;
       stroke-width: 2;
     }
@@ -930,17 +853,13 @@
             title="Экспорт в Google Sheets"
           >
             <span class="excel-icon">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
-                <circle cx="6" cy="6" r="2.5"/>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
               </svg>
             </span>
-            Sync
           </button>
         </div>
       </div>
-      <h2 id="user-greeting" class="header-middle">
-        Загрузка...
-      </h2>
     </header>
 
 
@@ -1219,7 +1138,7 @@
        в Telegram WebView после нового deployment.
        ======================================================== -->
 
-  <script src="./script.js?v=20260817-10"></script>
+  <script src="./script.js?v=20260817-11"></script>
 
 </body>
 </html>
