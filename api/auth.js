@@ -154,28 +154,30 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true });
     }
 
-    // МАРШРУТ 2: Добавление новой задачи в MongoDB Atlas
-    if (req.method === 'POST' && req.body.action === 'create') {
-      const validStatuses = ['todo', 'progress', 'blocked', 'done', 'cancelled'];
-      const validPriorities = ['low', 'medium', 'high', 'critical'];
-      const currentMember = await teamMembers.findOne(
-        { telegramId: String(user.id) },
-        { projection: { _id: 0, displayName: 1 } }
-      );
-      const newTask = {
-        id: Date.now().toString(),
-        status: validStatuses.includes(req.body.task.status) ? req.body.task.status : 'todo',
-        text: req.body.task.text,
-        author: currentMember && currentMember.displayName ? currentMember.displayName : realName,
-        executor: req.body.task.executor || '—',
-        deadline: req.body.task.deadline || '—',
-        priority: validPriorities.includes(req.body.task.priority) ? req.body.task.priority : 'medium',
-        notes: req.body.task.notes || '',
-        createdAt: new Date()
-      };
-      await collection.insertOne(newTask);
-      return res.status(200).json({ success: true, task: newTask });
-    }
+      // МАРШРУТ 2: Добавление новой задачи в MongoDB Atlas
+      if (req.method === 'POST' && req.body.action === 'create') {
+        const validStatuses = ['todo', 'progress', 'blocked', 'done', 'cancelled'];
+        const validPriorities = ['low', 'medium', 'high', 'critical'];
+        const currentMember = await teamMembers.findOne(
+          { telegramId: String(user.id) },
+          { projection: { _id: 0, displayName: 1 } }
+        );
+        // Генерируем уникальный ID для задачи (будет сохранён в Google Sheets)
+        const newTaskId = 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const newTask = {
+          id: newTaskId,
+          status: validStatuses.includes(req.body.task.status) ? req.body.task.status : 'todo',
+          text: req.body.task.text,
+          author: currentMember && currentMember.displayName ? currentMember.displayName : realName,
+          executor: req.body.task.executor || '—',
+          deadline: req.body.task.deadline || '—',
+          priority: validPriorities.includes(req.body.task.priority) ? req.body.task.priority : 'medium',
+          notes: req.body.task.notes || '',
+          createdAt: new Date()
+        };
+        await collection.insertOne(newTask);
+        return res.status(200).json({ success: true, task: newTask });
+      }
 
     // МАРШРУТ 2b: Обновление задачи (редактирование из модалки)
     if (req.method === 'POST' && req.body.action === 'update') {
