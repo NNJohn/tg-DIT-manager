@@ -495,7 +495,8 @@ module.exports = async (req, res) => {
           formatDueDate(t.deadline),
           priorityLabels[t.priority] || 'Средний',
           t.notes || '',
-          t.id || ''
+          t.id || '',
+          t.lastModified ? t.lastModified.toISOString() : ''
         ]);
       });
 
@@ -656,7 +657,7 @@ module.exports = async (req, res) => {
       // Очищаем только строки с задачами, не затрагивая заголовки в строке 1.
       await sheets.spreadsheets.values.clear({
         spreadsheetId,
-        range: `${sheetName}!A2:Z1000`
+        range: `${sheetName}!A2:I1000`
       });
 
       // Записываем задачи, начиная строго со второй строки.
