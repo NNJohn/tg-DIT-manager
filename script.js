@@ -788,6 +788,7 @@ async function drop(event, newStatus) {
     renderBoard();
     console.error('Не удалось сохранить статус на сервере:', err);
   }
+  exportToExcel();
 }
 // ============================================================
 // Excel Экспорт и синхронизация с Google Sheets
