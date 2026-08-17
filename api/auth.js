@@ -444,28 +444,12 @@ module.exports = async (req, res) => {
           });
         } else {
           // Существующая — КОНТРОЛЬ КОНФЛИКТОВ
+          // 1. Проверяем timestamp: если задача в БД новее или равна — не трогаем
           const sheetLastModified = sheetTask.lastModified ? new Date(sheetTask.lastModified) : null;
           const dbLastModified = existing.lastModified ? new Date(existing.lastModified) : existing.createdAt;
           
-          let needsUpdate = false;
-          
-          // 1. Если timestamp в Sheets новее — обновляем
-          if (sheetLastModified && sheetLastModified > dbLastModified) {
-            needsUpdate = true;
-          }
-          
-          // 2. Если содержимое в Sheets отличается от БД — значит пользователь
-          //    редактировал таблицу вручную, считаем её источником правды
-          if (existing.text !== sheetTask.text ||
-              existing.author !== sheetTask.author ||
-              existing.executor !== sheetTask.executor ||
-              existing.deadline !== sheetTask.deadline ||
-              existing.priority !== sheetTask.priority ||
-              existing.notes !== sheetTask.notes) {
-            needsUpdate = true;
-          }
-          
-          if (needsUpdate) {
+          if (sheetLastModified && sheetLastModified >= dbLastModified) {
+            // Задача в Sheets новее — обновляем из неё
             toUpdate[existing.id] = {
               text: sheetTask.text,
               author: sheetTask.author,
@@ -476,6 +460,7 @@ module.exports = async (req, res) => {
               lastModified: new Date()
             };
           }
+          // Если задача в БД новее — игнорируем Sheets (app is source of truth)
         }
       }
 
