@@ -173,7 +173,8 @@ module.exports = async (req, res) => {
           deadline: req.body.task.deadline || '—',
           priority: validPriorities.includes(req.body.task.priority) ? req.body.task.priority : 'medium',
           notes: req.body.task.notes || '',
-          createdAt: new Date()
+          createdAt: new Date(),
+          lastModified: new Date()
         };
         await collection.insertOne(newTask);
         return res.status(200).json({ success: true, task: newTask });
