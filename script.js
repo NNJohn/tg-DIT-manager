@@ -783,7 +783,7 @@ async function drop(event, newStatus) {
   }
 }
 // ============================================================
-// Excel Экспорт (SheetJS)
+// Excel Экспорт и синхронизация с Google Sheets
 // ============================================================
 async function exportToExcel() {
   if (!tg) return;
@@ -804,9 +804,22 @@ async function exportToExcel() {
 
     var result = await response.json();
     if (response.ok && result.success) {
+      // Переинициализируем задачи с сервера после синхронизации
+      await reloadTasks();
+      
+      let message = 'Данные синхронизированы!';
+      if (result.syncStats) {
+        const { inserted, updated, totalTasks } = result.syncStats;
+        const parts = [];
+        if (inserted > 0) parts.push(`+${inserted} новых из Sheets`);
+        if (updated > 0) parts.push(`обновлено ${updated} задач`);
+        parts.push(`всего задач: ${totalTasks}`);
+        message = parts.join('\n');
+      }
+      
       tg.showPopup({
         title: 'Успешно',
-        message: 'Данные в Google Drive синхронизированы! Откройте вашу закрепленную таблицу.',
+        message: message,
         buttons: [{ type: 'ok' }]
       });
     } else {
@@ -819,6 +832,28 @@ async function exportToExcel() {
       excelBtn.classList.remove('excel-syncing');
       excelBtn.disabled = false;
     }
+  }
+}
+
+async function reloadTasks() {
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        initData: tg.initData,
+        action: 'login'
+      })
+    });
+    
+    const responseText = await response.text();
+    const result = JSON.parse(responseText);
+    if (result.success) {
+      tasks = result.tasks || [];
+      renderBoard();
+    }
+  } catch (error) {
+    console.error('Ошибка перезагрузки задач:', error);
   }
 }
 
