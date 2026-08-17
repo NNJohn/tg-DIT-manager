@@ -6,6 +6,7 @@ let currentUserName = 'Пользователь';
 let isDeveloper = false;
 let deadlineMode = 'date';
 let editingTaskId = null;
+let currentView = localStorage.getItem('viewMode') || 'board';
 
 const tg =
   window.Telegram && window.Telegram.WebApp
@@ -35,6 +36,28 @@ function getDeadlineLabel(deadline) {
   }
 
   return isIsoDateValue(deadline) ? 'Дата' : 'Спринт';
+}
+
+// ============================================================
+// Режим отображения: Доска / Список
+// ============================================================
+function switchView(mode) {
+  currentView = mode;
+  localStorage.setItem('viewMode', mode);
+
+  const board = document.querySelector('.board');
+  const boardBtn = document.getElementById('view-board');
+  const listBtn = document.getElementById('view-list');
+
+  if (board) {
+    board.classList.toggle('view-list', mode === 'list');
+  }
+  if (boardBtn) {
+    boardBtn.classList.toggle('is-active', mode === 'board');
+  }
+  if (listBtn) {
+    listBtn.classList.toggle('is-active', mode === 'list');
+  }
 }
 
 // ============================================================
@@ -201,6 +224,7 @@ async function authorize() {
     // Рендерим доску и открываем приложение
     renderBoard();
     showApp();
+    switchView(currentView);
     
     return true;
   } catch (error) {
@@ -912,6 +936,7 @@ async function initApplication() {
   }
   
   applyTelegramTheme();
+  switchView(currentView);
 
   const telegramUser = getTelegramUser();
   if (telegramUser) {
