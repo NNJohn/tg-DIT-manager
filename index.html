@@ -27,6 +27,13 @@
       --tg-theme-button-color: #2481cc;
       --tg-theme-button-text-color: #ffffff;
       --tg-theme-secondary-bg-color: #f4f4f5;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.22);
+      --border-subtle: rgba(0, 0, 0, 0.08);
     }
 
     * {
@@ -40,191 +47,411 @@
         "Segoe UI",
         Roboto,
         sans-serif;
-
-      background-color:
-        var(--tg-theme-secondary-bg-color);
-
-      color:
-        var(--tg-theme-text-color);
-
+      background-color: var(--tg-theme-secondary-bg-color);
+      color: var(--tg-theme-text-color);
       margin: 0;
-      padding: 10px;
+      padding: 12px 12px 24px;
+      line-height: 1.45;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body.modal-open {
+      overflow: hidden;
     }
 
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 15px;
+      gap: 12px;
+      margin-bottom: 16px;
     }
 
     h2 {
       margin: 0;
-      font-size: 1.2rem;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
     }
 
     button {
-      background-color:
-        var(--tg-theme-button-color);
-
-      color:
-        var(--tg-theme-button-text-color);
-
+      font: inherit;
       border: none;
-      padding: 8px 12px;
-      border-radius: 8px;
       cursor: pointer;
-      font-weight: bold;
+      transition: opacity 0.15s ease, transform 0.1s ease;
     }
 
     button:active {
-      opacity: 0.8;
+      opacity: 0.85;
+      transform: scale(0.98);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-primary {
+      background-color: var(--tg-theme-button-color);
+      color: var(--tg-theme-button-text-color);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+    }
+
+    .btn-secondary {
+      background-color: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      box-shadow: inset 0 0 0 1px var(--border-subtle);
     }
 
     .header-buttons {
       display: flex;
-      gap: 5px;
+      gap: 8px;
+      flex-shrink: 0;
     }
 
     .board {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 12px;
     }
 
     .column {
-      background-color:
-        var(--tg-theme-bg-color);
-
-      border-radius: 10px;
-      padding: 10px;
-
-      box-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.1);
+      background-color: var(--tg-theme-bg-color);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      box-shadow: var(--shadow-sm);
     }
 
     .column-title {
-      font-weight: bold;
+      font-weight: 700;
+      font-size: 0.9rem;
       margin-bottom: 10px;
-      padding-bottom: 5px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--tg-theme-secondary-bg-color);
+      letter-spacing: 0.01em;
+    }
 
-      border-bottom:
-        2px solid var(--tg-theme-secondary-bg-color);
+    .column[data-status="todo"] .column-title {
+      color: #2481cc;
+      border-bottom-color: rgba(36, 129, 204, 0.25);
+    }
+
+    .column[data-status="progress"] .column-title {
+      color: #e6a700;
+      border-bottom-color: rgba(230, 167, 0, 0.28);
+    }
+
+    .column[data-status="done"] .column-title {
+      color: #2e9f5b;
+      border-bottom-color: rgba(46, 159, 91, 0.28);
+    }
+
+    .column[data-status="blocked"] .column-title {
+      color: #e53935;
+      border-bottom-color: rgba(229, 57, 53, 0.28);
+    }
+
+    .column[data-status="cancelled"] .column-title {
+      color: var(--tg-theme-hint-color);
+      border-bottom-color: var(--border-subtle);
     }
 
     .task-list {
-      min-height: 50px;
-
+      min-height: 40px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
     .task-card {
-      background-color:
-        var(--tg-theme-secondary-bg-color);
-
-      padding: 10px;
-      border-radius: 8px;
-
-      border-left:
-        5px solid #ccc;
-
+      background-color: var(--tg-theme-secondary-bg-color);
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      border-left: 4px solid #b0b0b0;
       cursor: grab;
+      box-shadow: var(--shadow-sm);
     }
 
     .task-card:active {
       cursor: grabbing;
     }
 
-    .task-card.priority-high {
-      border-left-color: #e53935;
+    .task-card.priority-low {
+      border-left-color: #4caf50;
     }
 
     .task-card.priority-medium {
       border-left-color: #ffb300;
     }
 
-    .task-card.priority-low {
-      border-left-color: #4caf50;
+    .task-card.priority-high {
+      border-left-color: #e53935;
+    }
+
+    .task-card.priority-critical {
+      border-left-color: #7b1fa2;
     }
 
     .task-text {
-      font-weight: 500;
-      margin-bottom: 5px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: anywhere;
     }
 
     .task-header {
       display: flex;
       align-items: flex-start;
       gap: 8px;
+      margin-bottom: 8px;
     }
 
     .task-header .task-text {
       flex: 1;
+      min-width: 0;
     }
 
     .task-delete {
       background: transparent;
       color: var(--tg-theme-hint-color);
-      font-size: 1.4rem;
+      font-size: 1.35rem;
       line-height: 1;
-      padding: 0 2px;
+      padding: 2px 4px;
+      flex-shrink: 0;
+      border-radius: 6px;
     }
 
-    .task-delete:disabled {
-      opacity: 0.6;
+    .task-delete:hover {
+      background: rgba(0, 0, 0, 0.06);
     }
 
     .task-meta {
-      font-size: 0.8rem;
-
-      color:
-        var(--tg-theme-hint-color);
+      font-size: 0.78rem;
+      color: var(--tg-theme-hint-color);
+      margin-top: 4px;
     }
 
-    .form-container {
-      background-color:
-        var(--tg-theme-bg-color);
+    .task-meta:first-of-type {
+      margin-top: 0;
+    }
 
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 15px;
+    .task-deadline {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.05);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
 
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
       display: none;
-      flex-direction: column;
-      gap: 8px;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
     }
 
-    .form-container input,
-    .form-container select {
+    .modal-overlay.is-open {
+      display: flex;
+    }
+
+    .modal-sheet {
       width: 100%;
+      max-width: 520px;
+      max-height: min(92vh, 780px);
+      display: flex;
+      flex-direction: column;
+      background: var(--tg-theme-bg-color);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      box-shadow: var(--shadow-lg);
+      animation: sheet-up 0.22s ease-out;
+    }
 
-      padding: 8px;
+    @keyframes sheet-up {
+      from {
+        transform: translateY(24px);
+        opacity: 0.6;
+      }
 
-      border:
-        1px solid #ccc;
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
 
+    @media (min-width: 520px) {
+      .modal-overlay {
+        align-items: center;
+        padding: 16px;
+      }
+
+      .modal-sheet {
+        border-radius: var(--radius-lg);
+        max-height: min(88vh, 780px);
+      }
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 16px 0;
+      flex-shrink: 0;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      background: var(--tg-theme-secondary-bg-color);
+      color: var(--tg-theme-hint-color);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 1.4rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .modal-body {
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+      min-height: 0;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-footer {
+      display: flex;
+      gap: 10px;
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0));
+      border-top: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    .modal-footer .btn-secondary,
+    .modal-footer .btn-primary {
+      flex: 1;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--tg-theme-hint-color);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .field-group input,
+    .field-group select,
+    .field-group textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      background: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+      font: inherit;
+    }
+
+    .field-group textarea {
+      min-height: 120px;
+      max-height: 280px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .field-group input:focus,
+    .field-group select:focus,
+    .field-group textarea:focus {
+      outline: none;
+      border-color: var(--tg-theme-button-color);
+      box-shadow: 0 0 0 3px rgba(36, 129, 204, 0.15);
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    @media (max-width: 400px) {
+      .field-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .segmented-control {
+      display: flex;
+      padding: 3px;
+      border-radius: var(--radius-sm);
+      background: var(--tg-theme-secondary-bg-color);
+      gap: 3px;
+    }
+
+    .segmented-control button {
+      flex: 1;
+      padding: 8px 10px;
       border-radius: 6px;
+      background: transparent;
+      color: var(--tg-theme-hint-color);
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
 
-      background:
-        var(--tg-theme-bg-color);
+    .segmented-control button.is-active {
+      background: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+      box-shadow: var(--shadow-sm);
+    }
 
-      color:
-        var(--tg-theme-text-color);
+    .deadline-field[hidden] {
+      display: none;
     }
 
     .devtools {
-      margin-top: 18px;
+      margin-top: 20px;
       background-color: var(--tg-theme-bg-color);
-      border-radius: 10px;
+      border-radius: var(--radius-md);
       padding: 12px;
+      box-shadow: var(--shadow-sm);
     }
 
     .devtools summary {
       cursor: pointer;
-      font-weight: bold;
+      font-weight: 700;
+      font-size: 0.9rem;
     }
 
     .devtools-content {
@@ -238,6 +465,7 @@
       color: var(--tg-theme-hint-color);
       font-size: 0.85rem;
       margin: 0;
+      white-space: pre-wrap;
     }
 
     .member-list {
@@ -248,18 +476,19 @@
 
     .member-card {
       background: var(--tg-theme-secondary-bg-color);
-      border-radius: 8px;
+      border-radius: var(--radius-sm);
       padding: 10px;
     }
 
     .member-card input {
       width: 100%;
-      padding: 8px;
+      padding: 10px 12px;
       margin-top: 6px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
       background: var(--tg-theme-bg-color);
       color: var(--tg-theme-text-color);
+      font: inherit;
     }
 
     .member-card button {
@@ -268,16 +497,12 @@
 
     #auth-status-screen {
       display: block;
-
       text-align: center;
-
-      padding:
-        50px 20px;
+      padding: 50px 20px;
     }
 
     #auth-status-screen p {
-      color:
-        var(--tg-theme-hint-color);
+      color: var(--tg-theme-hint-color);
     }
 
     #app {
@@ -319,80 +544,25 @@
 
       <div class="header-buttons">
 
-        <button onclick="toggleForm()">
+        <button
+          type="button"
+          class="btn-primary"
+          onclick="openTaskForm()"
+        >
           + Задача
         </button>
 
-        <button onclick="exportToExcel()">
+        <button
+          type="button"
+          class="btn-secondary"
+          onclick="exportToExcel()"
+        >
           Excel
         </button>
 
       </div>
 
     </header>
-
-
-    <!-- ======================================================
-         Форма создания задачи
-         ====================================================== -->
-
-    <div
-      id="task-form"
-      class="form-container"
-    >
-
-      <input
-        type="text"
-        id="form-text"
-        placeholder="Текст задачи"
-        required
-      >
-
-      <select id="form-executor">
-        <option value="">— Без исполнителя —</option>
-      </select>
-
-      <select id="form-status">
-        <option value="todo" selected>Беклог</option>
-        <option value="progress">В работе</option>
-        <option value="blocked">Блок</option>
-        <option value="done">Выполнено</option>
-        <option value="cancelled">Отменено</option>
-      </select>
-
-      <input
-        type="date"
-        id="form-deadline"
-      >
-
-      <select id="form-priority">
-
-        <option value="low">
-          Низкий приоритет
-        </option>
-
-        <option
-          value="medium"
-          selected
-        >
-          Средний приоритет
-        </option>
-
-        <option value="high">
-          Высокий приоритет
-        </option>
-
-        <option value="critical">
-          Критический приоритет
-        </option>
-
-      </select>
-
-      <button onclick="addTask()">
-        Сохранить задачу
-      </button>
-
-    </div>
 
 
     <!-- ======================================================
@@ -403,6 +573,7 @@
 
       <div
         class="column"
+        data-status="todo"
         ondragover="allowDrop(event)"
         ondrop="drop(event, 'todo')"
       >
@@ -421,6 +592,7 @@
 
       <div
         class="column"
+        data-status="progress"
         ondragover="allowDrop(event)"
         ondrop="drop(event, 'progress')"
       >
@@ -439,6 +611,7 @@
 
       <div
         class="column"
+        data-status="done"
         ondragover="allowDrop(event)"
         ondrop="drop(event, 'done')"
       >
@@ -457,6 +630,7 @@
 
       <div
         class="column"
+        data-status="blocked"
         ondragover="allowDrop(event)"
         ondrop="drop(event, 'blocked')"
       >
@@ -475,6 +649,7 @@
 
       <div
         class="column"
+        data-status="cancelled"
         ondragover="allowDrop(event)"
         ondrop="drop(event, 'cancelled')"
       >
@@ -506,6 +681,7 @@
 
         <button
           type="button"
+          class="btn-primary"
           onclick="createInvite()"
         >
           Создать приглашение
@@ -523,6 +699,137 @@
       </div>
     </details>
 
+    <!-- ======================================================
+         Модальное окно создания задачи
+         ====================================================== -->
+
+    <div
+      id="task-form-overlay"
+      class="modal-overlay"
+      aria-hidden="true"
+      onclick="handleOverlayClick(event)"
+    >
+      <div
+        class="modal-sheet"
+        role="dialog"
+        aria-labelledby="modal-title"
+        aria-modal="true"
+      >
+        <div class="modal-header">
+          <h3 id="modal-title">Новая задача</h3>
+          <button
+            type="button"
+            class="modal-close"
+            aria-label="Закрыть"
+            onclick="closeTaskForm()"
+          >
+            ×
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="field-group">
+            <label for="form-text">Текст задачи</label>
+            <textarea
+              id="form-text"
+              placeholder="Опишите задачу — можно в несколько строк"
+              maxlength="2000"
+              required
+            ></textarea>
+          </div>
+
+          <div class="field-group">
+            <label for="form-executor">Исполнитель</label>
+            <select id="form-executor">
+              <option value="">— Без исполнителя —</option>
+            </select>
+          </div>
+
+          <div class="field-row">
+            <div class="field-group">
+              <label for="form-status">Статус</label>
+              <select id="form-status">
+                <option value="todo" selected>Беклог</option>
+                <option value="progress">В работе</option>
+                <option value="blocked">Блок</option>
+                <option value="done">Выполнено</option>
+                <option value="cancelled">Отменено</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label for="form-priority">Приоритет</label>
+              <select id="form-priority">
+                <option value="low">Низкий</option>
+                <option value="medium" selected>Средний</option>
+                <option value="high">Высокий</option>
+                <option value="critical">Критический</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label>Срок</label>
+            <div
+              class="segmented-control"
+              role="tablist"
+              aria-label="Тип срока"
+            >
+              <button
+                type="button"
+                id="deadline-mode-date"
+                class="is-active"
+                role="tab"
+                aria-selected="true"
+                onclick="setDeadlineMode('date')"
+              >
+                Дата
+              </button>
+              <button
+                type="button"
+                id="deadline-mode-sprint"
+                role="tab"
+                aria-selected="false"
+                onclick="setDeadlineMode('sprint')"
+              >
+                Спринт
+              </button>
+            </div>
+            <input
+              type="date"
+              id="form-deadline-date"
+              class="deadline-field"
+            >
+            <input
+              type="text"
+              id="form-deadline-sprint"
+              class="deadline-field"
+              hidden
+              maxlength="80"
+              placeholder="Например: Спринт 24 или Q3"
+            >
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn-secondary"
+            onclick="closeTaskForm()"
+          >
+            Отмена
+          </button>
+          <button
+            type="button"
+            class="btn-primary"
+            onclick="addTask()"
+          >
+            Сохранить
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
 
@@ -533,7 +840,7 @@
        в Telegram WebView после нового deployment.
        ======================================================== -->
 
-  <script src="./script.js?v=20260817-1"></script>
+  <script src="./script.js?v=20260817-2"></script>
 
 </body>
 </html>

@@ -4,11 +4,37 @@ const API_URL = '/api/auth';
 let tasks = [];
 let currentUserName = 'Пользователь';
 let isDeveloper = false;
+let deadlineMode = 'date';
 
 const tg =
   window.Telegram && window.Telegram.WebApp
     ? window.Telegram.WebApp
     : null;
+
+function isIsoDateValue(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''));
+}
+
+function formatDeadlineDisplay(deadline) {
+  if (!deadline || deadline === '—') {
+    return '—';
+  }
+
+  if (isIsoDateValue(deadline)) {
+    const parts = deadline.split('-');
+    return parts[2] + '.' + parts[1] + '.' + parts[0];
+  }
+
+  return deadline;
+}
+
+function getDeadlineLabel(deadline) {
+  if (!deadline || deadline === '—') {
+    return 'Срок';
+  }
+
+  return isIsoDateValue(deadline) ? 'Дата' : 'Спринт';
+}
 
 // ============================================================
 // UI Функции управления экранами
@@ -243,8 +269,9 @@ function renderBoard() {
       taskAuthor.innerText = 'От: ' + task.author + ' | Исполнитель: ' + (task.executor || '—');
 
       const taskDeadline = document.createElement('div');
-      taskDeadline.className = 'task-meta';
-      taskDeadline.innerText = 'Срок: ' + (task.deadline || '—');
+      taskDeadline.className = 'task-deadline';
+      taskDeadline.innerText =
+        getDeadlineLabel(task.deadline) + ': ' + formatDeadlineDisplay(task.deadline);
 
       card.appendChild(taskHeader);
       card.appendChild(taskAuthor);
@@ -303,6 +330,7 @@ function renderTeamMembers(members) {
 
     const saveButton = document.createElement('button');
     saveButton.type = 'button';
+    saveButton.className = 'btn-primary';
     saveButton.innerText = 'Сохранить';
     saveButton.onclick = function() {
       saveTeamMember(member.telegramId, saveButton);
@@ -424,23 +452,116 @@ function deleteTask(taskId, button) {
 }
 
 // ============================================================
-// Создание задачи и отправка в MongoDB
+// Модальное окно создания задачи
 // ============================================================
-function toggleForm() {
-  const form = document.getElementById('task-form');
-  form.style.display = form.style.display === 'flex' ? 'none' : 'flex';
+function setDeadlineMode(mode) {
+  deadlineMode = mode === 'sprint' ? 'sprint' : 'date';
+
+  const dateButton = document.getElementById('deadline-mode-date');
+  const sprintButton = document.getElementById('deadline-mode-sprint');
+  const dateInput = document.getElementById('form-deadline-date');
+  const sprintInput = document.getElementById('form-deadline-sprint');
+
+  if (!dateButton || !sprintButton || !dateInput || !sprintInput) {
+    return;
+  }
+
+  const isDateMode = deadlineMode === 'date';
+  dateButton.classList.toggle('is-active', isDateMode);
+  sprintButton.classList.toggle('is-active', !isDateMode);
+  dateButton.setAttribute('aria-selected', isDateMode ? 'true' : 'false');
+  sprintButton.setAttribute('aria-selected', !isDateMode ? 'true' : 'false');
+  dateInput.hidden = !isDateMode;
+  sprintInput.hidden = isDateMode;
+}
+
+function resetTaskForm() {
+  const textInput = document.getElementById('form-text');
+  const executorInput = document.getElementById('form-executor');
+  const statusInput = document.getElementById('form-status');
+  const priorityInput = document.getElementById('form-priority');
+  const dateInput = document.getElementById('form-deadline-date');
+  const sprintInput = document.getElementById('form-deadline-sprint');
+
+  if (textInput) textInput.value = '';
+  if (executorInput) executorInput.value = '';
+  if (statusInput) statusInput.value = 'todo';
+  if (priorityInput) priorityInput.value = 'medium';
+  if (dateInput) dateInput.value = '';
+  if (sprintInput) sprintInput.value = '';
+  setDeadlineMode('date');
+}
+
+function openTaskForm() {
+  const overlay = document.getElementById('task-form-overlay');
+  if (!overlay) return;
+
+  overlay.classList.add('is-open');
+  overlay.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('modal-open');
+
+  if (tg && tg.BackButton) {
+    tg.BackButton.show();
+    tg.BackButton.onClick(closeTaskForm);
+  }
+
+  const textInput = document.getElementById('form-text');
+  if (textInput) {
+    setTimeout(function() {
+      textInput.focus();
+    }, 120);
+  }
+}
+
+function closeTaskForm() {
+  const overlay = document.getElementById('task-form-overlay');
+  if (!overlay) return;
+
+  overlay.classList.remove('is-open');
+  overlay.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+
+  if (tg && tg.BackButton) {
+    tg.BackButton.hide();
+  }
+
+  resetTaskForm();
+}
+
+function handleOverlayClick(event) {
+  if (event.target && event.target.id === 'task-form-overlay') {
+    closeTaskForm();
+  }
+}
+
+function getTaskDeadlineValue() {
+  if (deadlineMode === 'sprint') {
+    const sprintValue = document.getElementById('form-deadline-sprint').value.trim();
+    return sprintValue || '—';
+  }
+
+  const dateValue = document.getElementById('form-deadline-date').value;
+  return dateValue || '—';
 }
 
 async function addTask() {
   const text = document.getElementById('form-text').value.trim();
-  // Считываем выбранное значение из выпадающего списка select
   const executor = document.getElementById('form-executor').value;
-  const deadline = document.getElementById('form-deadline').value;
+  const deadline = getTaskDeadlineValue();
   const status = document.getElementById('form-status').value;
   const priority = document.getElementById('form-priority').value;
 
   if (!text) {
+    if (tg && typeof tg.showAlert === 'function') {
+      tg.showAlert('Введите текст задачи.');
+    }
     return;
+  }
+
+  const saveButton = document.querySelector('#task-form-overlay .modal-footer .btn-primary');
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.innerText = 'Сохраняем…';
   }
 
   try {
@@ -449,24 +570,31 @@ async function addTask() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         initData: tg.initData,
-        action: 'create', // Сигнал бэкенду на запись в базу
+        action: 'create',
         task: { text: text, executor: executor, deadline: deadline, status: status, priority: priority }
       })
     });
-    
+
     const result = await response.json();
-    if (response.ok && result.success) {
-      // Добавляем созданную сервером задачу в массив и перерисовываем
-      tasks.push(result.task);
-      renderBoard();
-      toggleForm();
-      
-      // Сброс полей
-      document.getElementById('form-text').value = '';
-      document.getElementById('form-deadline').value = '';
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'Не удалось создать задачу.');
     }
-  } catch (e) {
-    console.error('Ошибка создания задачи:', e);
+
+    tasks.push(result.task);
+    renderBoard();
+    closeTaskForm();
+  } catch (error) {
+    console.error('Ошибка создания задачи:', error);
+    if (tg && typeof tg.showAlert === 'function') {
+      tg.showAlert(error.message || 'Не удалось создать задачу.');
+    } else {
+      alert(error.message || 'Не удалось создать задачу.');
+    }
+  } finally {
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.innerText = 'Сохранить';
+    }
   }
 }
 
