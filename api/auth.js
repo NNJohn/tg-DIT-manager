@@ -255,22 +255,23 @@ module.exports = async (req, res) => {
           const targetSheetName = sheetsList.find(s => s.properties.title === 'Открытые Вопросы') || sheetsList[0];
           if (targetSheetName) {
             const sheetTitle = targetSheetName.properties.title;
-            // Читаем все данные
+            // Читаем все данные включая столбец H (ID задачи)
             const sheetData = await sheets.spreadsheets.values.get({
               spreadsheetId,
-              range: `${sheetTitle}!A:G`
+              range: `${sheetTitle}!A:H`
             });
             const rows = sheetData.data.values || [];
-            // Фильтруем строку с задачей (по тексту)
+            // Фильтруем строку с задачей (по ID из столбца H)
             const filteredRows = rows.filter((row, index) => {
               if (index === 0) return true; // оставляем заголовок
               if (!row || !row[0]) return false;
-              return String(row[0]).trim() !== task.text;
+              // Ищем по ID в столбце H (индекс 7)
+              return (row[7] || '').trim() !== task.id;
             });
             // Перезаписываем таблицу без удалённой задачи
             await sheets.spreadsheets.values.clear({
               spreadsheetId,
-              range: `${sheetTitle}!A2:G1000`
+              range: `${sheetTitle}!A2:H1000`
             });
             if (filteredRows.length > 1) {
               await sheets.spreadsheets.values.update({
@@ -406,15 +407,21 @@ module.exports = async (req, res) => {
         sheetIdsFound.add(sheetTask.sheetId);
         
         let existing = null;
-        // Если есть ID в Sheets — ищем по нему
+        // Сначала ищем по ID из столбца H
         if (sheetTask.sheetId) {
           existing = dbIdMap[sheetTask.sheetId];
         }
         
+        // Если не нашли по ID и в Sheets нет ID — ищем по тексту (fallback)
+        if (!existing && !sheetTask.sheetId) {
+          existing = dbTasks.find(t => t.text === sheetTask.text);
+        }
+        
         if (!existing) {
           // Новая задача — только из Sheets
+          const newId = sheetTask.sheetId || ('task_' + Date.now().toString() + Math.random().toString(36).substr(2, 9));
           toInsert.push({
-            id: sheetTask.sheetId || ('task_' + Date.now().toString() + Math.random().toString(36).substr(2, 9)),
+            id: newId,
             status: sheetTask.status,
             text: sheetTask.text,
             author: sheetTask.author || realName,
@@ -434,6 +441,7 @@ module.exports = async (req, res) => {
             existing.priority !== sheetTask.priority ||
             existing.notes !== sheetTask.notes
           );
+          // Обновляем текст и другие поля, но сохраняем ID
           if (needsUpdate) {
             toUpdate[existing.id] = {
               text: sheetTask.text,
