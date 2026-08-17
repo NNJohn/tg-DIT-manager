@@ -529,7 +529,7 @@ module.exports = async (req, res) => {
               table: {
                 tableId: sheetTable.tableId,
                 range: {
-                  sheetId: firstSheetId,
+                  sheetId: sheetId,
                   startRowIndex: currentRange.startRowIndex ?? 0,
                   endRowIndex: requiredEndRow,
                   startColumnIndex: currentRange.startColumnIndex ?? 0,
@@ -547,25 +547,25 @@ module.exports = async (req, res) => {
       const buildLegacyValidationRequests = () => ([
         {
           setDataValidation: {
-            range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 1, endColumnIndex: 2 },
+            range: { sheetId: sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 1, endColumnIndex: 2 },
             rule: dropdownRule(Object.values(statusLabels), 'Выберите статус задачи.')
           }
         },
         {
           setDataValidation: {
-            range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 2, endColumnIndex: 3 },
+            range: { sheetId: sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 2, endColumnIndex: 3 },
             rule: dropdownRule(memberOptions, 'Выберите автора из справочника.')
           }
         },
         {
           setDataValidation: {
-            range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 3, endColumnIndex: 4 },
+            range: { sheetId: sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 3, endColumnIndex: 4 },
             rule: dropdownRule(memberOptions, 'Выберите исполнителя из справочника.')
           }
         },
         {
           setDataValidation: {
-            range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 5, endColumnIndex: 6 },
+            range: { sheetId: sheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 5, endColumnIndex: 6 },
             rule: dropdownRule(Object.values(priorityLabels), 'Выберите приоритет задачи.')
           }
         }
