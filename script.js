@@ -201,7 +201,6 @@ async function authorize() {
     // Рендерим доску и открываем приложение
     renderBoard();
     showApp();
-    exportToExcel();
     
     return true;
   } catch (error) {
@@ -212,6 +211,7 @@ async function authorize() {
     );
     return false;
   }
+  exportToExcel();
 }
 
 // ============================================================
@@ -496,7 +496,7 @@ function openEditTask(taskId) {
   if (notesInput) notesInput.value = task.notes || '';
 
   // Определяем режим срока
-  if (isIsoDateValue(task.deadline)savetask) {
+  if (isIsoDateValue(task.deadline)) {
     setDeadlineMode('date');
     document.getElementById('form-deadline-date').value = task.deadline === '—' ? '' : task.deadline;
   } else {
