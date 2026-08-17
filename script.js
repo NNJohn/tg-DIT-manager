@@ -201,11 +201,7 @@ async function authorize() {
     // Рендерим доску и открываем приложение
     renderBoard();
     showApp();
-    
-    // Авто-синхронизация после загрузки
-    if (tasks.length > 0) {
-      exportToExcel();
-    }
+    exportToExcel();
     
     return true;
   } catch (error) {
