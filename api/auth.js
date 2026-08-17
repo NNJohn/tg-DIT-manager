@@ -369,8 +369,8 @@ module.exports = async (req, res) => {
       // ============================================================
       // ОБРАТНАЯ СИНХРОНИЗАЦИЯ: Sheets → MongoDB
       // ============================================================
-      // Читаем все 8 столбцов: A-G данные, H — ID задачи
-      const sheetRange = `${sheetName}!A:H`;
+      // Читаем все 9 столбцов: A-G данные, H — ID задачи, I — lastModified
+      const sheetRange = `${sheetName}!A:I`;
       const sheetResponse = await sheets.spreadsheets.values.get({
         spreadsheetId,
         range: sheetRange
@@ -385,6 +385,7 @@ module.exports = async (req, res) => {
 
         fromSheet.push({
           sheetId: row[7] ? String(row[7]).trim() : '', // ID из столбца H
+          lastModified: row[8] ? String(row[8]).trim() : '', // timestamp из столбца I
           text: String(row[0]).trim(),
           status: Object.keys(statusLabels).find(k => statusLabels[k] === (row[1] || 'Беклог')) || 'todo',
           author: row[2] || '',
@@ -442,24 +443,21 @@ module.exports = async (req, res) => {
             createdAt: new Date()
           });
         } else {
-          // Существующая — проверяем изменения
-          const needsUpdate = (
-            existing.text !== sheetTask.text ||
-            existing.author !== sheetTask.author ||
-            existing.executor !== sheetTask.executor ||
-            existing.deadline !== sheetTask.deadline ||
-            existing.priority !== sheetTask.priority ||
-            existing.notes !== sheetTask.notes
-          );
-          // Обновляем текст и другие поля, но сохраняем ID
-          if (needsUpdate) {
+          // Существующая — КОНТРОЛЬ КОНФЛИКТОВ: обновляем из Sheets только если он новее
+          const sheetLastModified = sheetTask.lastModified ? new Date(sheetTask.lastModified) : null;
+          const dbLastModified = existing.lastModified ? new Date(existing.lastModified) : existing.createdAt;
+          
+          // Если задача в Sheets старше или равна — пропускаем (app есть source of truth)
+          // Обновляем только если задача в Sheets новее
+          if (sheetLastModified && sheetLastModified > dbLastModified) {
             toUpdate[existing.id] = {
               text: sheetTask.text,
               author: sheetTask.author,
               executor: sheetTask.executor,
               deadline: sheetTask.deadline,
               priority: sheetTask.priority,
-              notes: sheetTask.notes
+              notes: sheetTask.notes,
+              lastModified: new Date() // При принятии изменений из Sheets обновляем timestamp
             };
           }
         }
