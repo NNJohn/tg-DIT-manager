@@ -283,8 +283,97 @@ module.exports = async (req, res) => {
         return isoDate ? `${isoDate[3]}.${isoDate[2]}.${isoDate[1]}` : deadline;
       };
 
-      // Строка 1 принадлежит пользователю и никогда не перезаписывается.
-      // Заметки — 7-й столбец (G).
+      // ============================================================
+      // ОБРАТНАЯ СИНХРОНИЗАЦИЯ: Sheets → MongoDB
+      // ============================================================
+      const sheetRange = `${firstSheetName}!A:G`;
+      const sheetResponse = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: sheetRange
+      });
+      const sheetRows = sheetResponse.data.values || [];
+
+      // Пропускаем заголовок (строка 0), парсим данные
+      const fromSheet = [];
+      for (let i = 1; i < sheetRows.length; i++) {
+        const row = sheetRows[i];
+        if (!row || !row[0] || !String(row[0]).trim()) continue; // пропускаем пустые
+
+        fromSheet.push({
+          text: String(row[0]).trim(),
+          status: Object.keys(statusLabels).find(k => statusLabels[k] === (row[1] || 'Беклог')) || 'todo',
+          author: row[2] || '',
+          executor: row[3] || '—',
+          deadline: formatDueDateBack(row[4]) || '—',
+          priority: Object.keys(priorityLabels).find(k => priorityLabels[k] === (row[5] || 'Средний')) || 'medium',
+          notes: row[6] ? String(row[6]).trim() : ''
+        });
+      }
+
+      // Маппинг: текст задачи → статус из БД (чтобы не терять изменения статуса)
+      const dbStatusMap = {};
+      dbTasks.forEach(t => {
+        dbStatusMap[t.text] = t.status;
+      });
+
+      const toInsert = [];
+      const toUpdate = {};
+
+      for (const sheetTask of fromSheet) {
+        const existing = dbTasks.find(t => t.text === sheetTask.text);
+        if (!existing) {
+          // Новая задача — только из Sheets
+          toInsert.push({
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+            status: sheetTask.status,
+            text: sheetTask.text,
+            author: sheetTask.author || realName,
+            executor: sheetTask.executor || '—',
+            deadline: sheetTask.deadline,
+            priority: sheetTask.priority,
+            notes: sheetTask.notes,
+            createdAt: new Date()
+          });
+        } else {
+          // Существующая — проверяем изменения
+          const needsUpdate = (
+            existing.author !== sheetTask.author ||
+            existing.executor !== sheetTask.executor ||
+            existing.deadline !== sheetTask.deadline ||
+            existing.priority !== sheetTask.priority ||
+            existing.notes !== sheetTask.notes
+          );
+          if (needsUpdate) {
+            toUpdate[existing.id] = {
+              text: sheetTask.text,
+              author: sheetTask.author,
+              executor: sheetTask.executor,
+              deadline: sheetTask.deadline,
+              priority: sheetTask.priority,
+              notes: sheetTask.notes
+            };
+          }
+        }
+      }
+
+      let insertedCount = 0;
+      let updatedCount = 0;
+
+      // Обновляем существующие
+      for (const [id, fields] of Object.entries(toUpdate)) {
+        await collection.updateOne({ id }, { $set: fields });
+        updatedCount++;
+      }
+
+      // Вставляем новые
+      if (toInsert.length > 0) {
+        await collection.insertMany(toInsert);
+        insertedCount = toInsert.length;
+      }
+
+      // ============================================================
+      // ПРЯМОЙ ЭКСПОРТ: MongoDB → Sheets
+      // ============================================================
       const rows = [];
 
       dbTasks.forEach(t => {
