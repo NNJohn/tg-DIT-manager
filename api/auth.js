@@ -478,7 +478,8 @@ module.exports = async (req, res) => {
           t.executor || '—',
           formatDueDate(t.deadline),
           priorityLabels[t.priority] || 'Средний',
-          t.notes || ''
+          t.notes || '',
+          t.id || ''
         ]);
       });
 
