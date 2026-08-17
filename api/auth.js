@@ -366,7 +366,8 @@ module.exports = async (req, res) => {
       // ============================================================
       // ОБРАТНАЯ СИНХРОНИЗАЦИЯ: Sheets → MongoDB
       // ============================================================
-      const sheetRange = `${sheetName}!A:G`;
+      // Читаем все 8 столбцов: A-G данные, H — ID задачи
+      const sheetRange = `${sheetName}!A:H`;
       const sheetResponse = await sheets.spreadsheets.values.get({
         spreadsheetId,
         range: sheetRange
@@ -380,6 +381,7 @@ module.exports = async (req, res) => {
         if (!row || !row[0] || !String(row[0]).trim()) continue; // пропускаем пустые
 
         fromSheet.push({
+          sheetId: row[7] ? String(row[7]).trim() : '', // ID из столбца H
           text: String(row[0]).trim(),
           status: Object.keys(statusLabels).find(k => statusLabels[k] === (row[1] || 'Беклог')) || 'todo',
           author: row[2] || '',
@@ -390,21 +392,29 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Маппинг: текст задачи → статус из БД (чтобы не терять изменения статуса)
-      const dbStatusMap = {};
+      // Маппинг ID задачи → задача из БД
+      const dbIdMap = {};
       dbTasks.forEach(t => {
-        dbStatusMap[t.text] = t.status;
+        dbIdMap[t.id] = t;
       });
 
       const toInsert = [];
       const toUpdate = {};
+      const sheetIdsFound = new Set();
 
       for (const sheetTask of fromSheet) {
-        const existing = dbTasks.find(t => t.text === sheetTask.text);
+        sheetIdsFound.add(sheetTask.sheetId);
+        
+        let existing = null;
+        // Если есть ID в Sheets — ищем по нему
+        if (sheetTask.sheetId) {
+          existing = dbIdMap[sheetTask.sheetId];
+        }
+        
         if (!existing) {
           // Новая задача — только из Sheets
           toInsert.push({
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+            id: sheetTask.sheetId || ('task_' + Date.now().toString() + Math.random().toString(36).substr(2, 9)),
             status: sheetTask.status,
             text: sheetTask.text,
             author: sheetTask.author || realName,
@@ -417,6 +427,7 @@ module.exports = async (req, res) => {
         } else {
           // Существующая — проверяем изменения
           const needsUpdate = (
+            existing.text !== sheetTask.text ||
             existing.author !== sheetTask.author ||
             existing.executor !== sheetTask.executor ||
             existing.deadline !== sheetTask.deadline ||
