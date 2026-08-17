@@ -150,6 +150,36 @@
       border: 0;
     }
 
+    #excel-export-btn .sync-indicator {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+      color: white;
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.3s ease;
+    }
+
+    #excel-export-btn.excel-success .sync-indicator {
+      background: #2e9f5b;
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    #excel-export-btn.excel-error .sync-indicator {
+      background: #e53935;
+      opacity: 1;
+      transform: scale(1);
+    }
+
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
@@ -904,7 +934,7 @@
        в Telegram WebView после нового deployment.
        ======================================================== -->
 
-  <script src="./script.js?v=20260817-5"></script>
+  <script src="./script.js?v=20260817-7"></script>
 
 </body>
 </html>

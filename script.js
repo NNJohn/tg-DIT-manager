@@ -915,6 +915,9 @@ async function initApplication() {
 
   // Запуск процесса авторизации и загрузки базы данных
   await authorize();
+  
+  // Автоматическая синхронизация после загрузки
+  autoSyncOnStart();
 }
 
 initApplication();

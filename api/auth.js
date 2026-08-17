@@ -228,12 +228,12 @@ module.exports = async (req, res) => {
 
       // Удаляем строку из Sheets если подключена таблица
       try {
-        const privateKey = (process.env.GOOGLE_PRIVATE_KEY || '').trim().replace(/^["']|["']$/g, '');
+        let privateKey = (process.env.GOOGLE_PRIVATE_KEY || '').trim().replace(/^["']|["']$/g, '');
         if (privateKey && process.env.GOOGLE_SPREADSHEET_ID) {
           if (privateKey.includes('\\n')) {
-            privateKey.replace(/\\n/g, '\n');
-          } else {
-            privateKey.split(/\r?\n/).join('\n');
+            privateKey = privateKey.replace(/\\n/g, '\n');
+          } else if (privateKey.includes('\n')) {
+            privateKey = privateKey.split(/\r?\n/).join('\n');
           }
           
           const auth = new google.auth.JWT(
