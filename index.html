@@ -245,6 +245,28 @@
       .board {
         flex-direction: row;
         gap: 8px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 8px;
+      }
+
+      .board::-webkit-scrollbar {
+        height: 6px;
+      }
+
+      .board::-webkit-scrollbar-track {
+        background: var(--tg-theme-secondary-bg-color);
+        border-radius: 3px;
+      }
+
+      .board::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+      }
+
+      .board::-webkit-scrollbar-thumb:hover {
+        background: var(--tg-theme-hint-color);
       }
     }
 
@@ -350,8 +372,6 @@
       padding: 2px 6px;
       align-items: flex-start;
       border-radius: 4px;
-      border: 1px solid var(--border-color);
-      background: #13151A;
     }
 
     .column-count span {
@@ -625,6 +645,8 @@
     .modal-footer .btn-secondary,
     .modal-footer .btn-primary {
       flex: 1;
+      text-align: center;
+      justify-content: center;
     }
 
     .field-group {
@@ -670,7 +692,6 @@
     .field-group textarea:focus {
       outline: none;
       border-color: var(--tg-theme-button-color);
-      box-shadow: 0 0 0 3px rgba(36, 129, 204, 0.15);
     }
 
     .field-row {
@@ -706,7 +727,6 @@
     .segmented-control button.is-active {
       background: var(--tg-theme-bg-color);
       color: var(--tg-theme-text-color);
-      box-shadow: var(--shadow-sm);
     }
 
     .deadline-field[hidden] {
@@ -718,7 +738,6 @@
       background-color: var(--tg-theme-bg-color);
       border-radius: var(--radius-md);
       padding: 12px;
-      box-shadow: var(--shadow-sm);
     }
 
     .devtools summary {
@@ -757,7 +776,6 @@
       width: 100%;
       padding: 10px 12px;
       margin-top: 6px;
-      border: 1px solid var(--border-subtle);
       border-radius: var(--radius-sm);
       background: var(--tg-theme-bg-color);
       color: var(--tg-theme-text-color);
@@ -1125,7 +1143,7 @@
        в Telegram WebView после нового deployment.
        ======================================================== -->
 
-  <script src="./script.js?v=20260817-12"></script>
+  <script src="./script.js?v=20260817-13"></script>
 
 </body>
 </html>
