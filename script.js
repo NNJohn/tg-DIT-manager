@@ -346,7 +346,6 @@ function renderTeamMembers(members) {
     saveButton.innerText = 'Сохранить';
     saveButton.onclick = function() {
       saveTeamMember(member.telegramId, saveButton);
-      exportToExcel();
     };
 
     card.appendChild(info);
@@ -497,7 +496,7 @@ function openEditTask(taskId) {
   if (notesInput) notesInput.value = task.notes || '';
 
   // Определяем режим срока
-  if (isIsoDateValue(task.deadline)) {
+  if (isIsoDateValue(task.deadline)savetask) {
     setDeadlineMode('date');
     document.getElementById('form-deadline-date').value = task.deadline === '—' ? '' : task.deadline;
   } else {
@@ -544,6 +543,7 @@ function saveTask() {
       saveButton.innerText = 'Сохранить';
     }
   }
+  exportToExcel();
 }
 
 async function saveNewTask(text, executor, deadline, status, priority, notes) {
@@ -597,6 +597,7 @@ async function updateExistingTask(text, executor, deadline, status, priority, no
   
   renderBoard();
   closeTaskForm();
+  exportToExcel();
 }
 function setDeadlineMode(mode) {
   deadlineMode = mode === 'sprint' ? 'sprint' : 'date';
