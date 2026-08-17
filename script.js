@@ -346,6 +346,7 @@ function renderTeamMembers(members) {
     saveButton.innerText = 'Сохранить';
     saveButton.onclick = function() {
       saveTeamMember(member.telegramId, saveButton);
+      exportToExcel();
     };
 
     card.appendChild(info);
