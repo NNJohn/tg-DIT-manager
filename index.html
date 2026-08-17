@@ -73,17 +73,10 @@
 
     .header-top {
       display: flex;
-      flex-direction: column;
+      align-items: center;
       gap: 8px;
       width: 100%;
-    }
-
-    @media (min-width: 600px) {
-      .header-top {
-        flex-direction: row;
-        align-items: center;
-        gap: 12px;
-      }
+      flex-wrap: wrap;
     }
 
     .header-bottom {
@@ -963,18 +956,15 @@
         ondragover="allowDrop(event)"
         ondrop="drop(event, 'todo')"
       >
-
-        <div class="column-title">
-          Беклог
+        <div class="column-header">
+          <div class="column-header-left">
+            <span class="column-header-dot"></span>
+            <div class="column-title">Беклог</div>
+          </div>
+          <div class="column-count"><span class="count-badge">0</span></div>
         </div>
-
-        <div
-          id="todo"
-          class="task-list"
-        ></div>
-
+        <div id="todo" class="task-list"></div>
       </div>
-
 
       <div
         class="column"
@@ -982,18 +972,15 @@
         ondragover="allowDrop(event)"
         ondrop="drop(event, 'progress')"
       >
-
-        <div class="column-title">
-          В работе
+        <div class="column-header">
+          <div class="column-header-left">
+            <span class="column-header-dot"></span>
+            <div class="column-title">В работе</div>
+          </div>
+          <div class="column-count"><span class="count-badge">0</span></div>
         </div>
-
-        <div
-          id="progress"
-          class="task-list"
-        ></div>
-
+        <div id="progress" class="task-list"></div>
       </div>
-
 
       <div
         class="column"
@@ -1001,18 +988,15 @@
         ondragover="allowDrop(event)"
         ondrop="drop(event, 'done')"
       >
-
-        <div class="column-title">
-          Выполнено
+        <div class="column-header">
+          <div class="column-header-left">
+            <span class="column-header-dot"></span>
+            <div class="column-title">Выполнено</div>
+          </div>
+          <div class="column-count"><span class="count-badge">0</span></div>
         </div>
-
-        <div
-          id="done"
-          class="task-list"
-        ></div>
-
+        <div id="done" class="task-list"></div>
       </div>
-
 
       <div
         class="column"
@@ -1020,18 +1004,15 @@
         ondragover="allowDrop(event)"
         ondrop="drop(event, 'blocked')"
       >
-
-        <div class="column-title">
-          Блок
+        <div class="column-header">
+          <div class="column-header-left">
+            <span class="column-header-dot"></span>
+            <div class="column-title">Блок</div>
+          </div>
+          <div class="column-count"><span class="count-badge">0</span></div>
         </div>
-
-        <div
-          id="blocked"
-          class="task-list"
-        ></div>
-
+        <div id="blocked" class="task-list"></div>
       </div>
-
 
       <div
         class="column"
@@ -1039,16 +1020,14 @@
         ondragover="allowDrop(event)"
         ondrop="drop(event, 'cancelled')"
       >
-
-        <div class="column-title">
-          Отменено
+        <div class="column-header">
+          <div class="column-header-left">
+            <span class="column-header-dot"></span>
+            <div class="column-title">Отменено</div>
+          </div>
+          <div class="column-count"><span class="count-badge">0</span></div>
         </div>
-
-        <div
-          id="cancelled"
-          class="task-list"
-        ></div>
-
+        <div id="cancelled" class="task-list"></div>
       </div>
 
     </div>
@@ -1240,7 +1219,7 @@
        в Telegram WebView после нового deployment.
        ======================================================== -->
 
-  <script src="./script.js?v=20260817-9"></script>
+  <script src="./script.js?v=20260817-10"></script>
 
 </body>
 </html>

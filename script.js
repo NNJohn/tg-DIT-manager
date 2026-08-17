@@ -272,6 +272,15 @@ function renderBoard() {
     }
     listElement.innerHTML = '';
 
+    // Обновляем счётчик задач в колонке
+    const column = listElement.closest('.column');
+    if (column) {
+      const countBadge = column.querySelector('.count-badge');
+      if (countBadge) {
+        countBadge.textContent = columns[status].length;
+      }
+    }
+
     columns[status].forEach(function(task) {
       const card = createTaskCard(task);
       listElement.appendChild(card);
@@ -387,70 +396,6 @@ function renderListView() {
     const card = createTaskCard(task);
     listView.appendChild(card);
   });
-}
-
-function createTaskCard(task) {
-  const card = document.createElement('div');
-  card.className = 'task-card priority-' + task.priority;
-  card.draggable = true;
-  card.ondragstart = function(event) {
-    event.dataTransfer.setData('text/plain', task.id);
-  };
-
-  const taskText = document.createElement('div');
-  taskText.className = 'task-text';
-  taskText.innerText = task.text;
-
-  card.style.cursor = 'pointer';
-  card.onclick = function(event) {
-    if (event.target === taskDelete || taskDelete.contains(event.target)) {
-      return;
-    }
-    openEditTask(task.id);
-  };
-
-  const taskDelete = document.createElement('button');
-  taskDelete.className = 'task-delete';
-  taskDelete.type = 'button';
-  taskDelete.title = 'Удалить задачу';
-  taskDelete.setAttribute('aria-label', 'Удалить задачу');
-  taskDelete.innerText = '×';
-  taskDelete.draggable = false;
-  taskDelete.onclick = function(event) {
-    event.stopPropagation();
-    deleteTask(task.id, taskDelete);
-  };
-
-  const taskHeader = document.createElement('div');
-  taskHeader.className = 'task-header';
-  taskHeader.appendChild(taskText);
-  taskHeader.appendChild(taskDelete);
-
-  const taskAuthor = document.createElement('div');
-  taskAuthor.className = 'task-meta';
-  taskAuthor.innerText = 'От: ' + task.author + ' | Исполнитель: ' + (task.executor || '—');
-
-  const taskStatus = document.createElement('div');
-  taskStatus.className = 'task-meta';
-  const statusLabels = {
-    todo: 'Беклог',
-    progress: 'В работе',
-    blocked: 'Блок',
-    done: 'Выполнено',
-    cancelled: 'Отменено'
-  };
-  taskStatus.innerText = 'Статус: ' + (statusLabels[task.status] || task.status);
-
-  const taskDeadline = document.createElement('div');
-  taskDeadline.className = 'task-deadline';
-  taskDeadline.innerText =
-    getDeadlineLabel(task.deadline) + ': ' + formatDeadlineDisplay(task.deadline);
-
-  card.appendChild(taskHeader);
-  card.appendChild(taskAuthor);
-  card.appendChild(taskStatus);
-  card.appendChild(taskDeadline);
-  return card;
 }
 
 // ============================================================
