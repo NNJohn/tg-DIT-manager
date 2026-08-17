@@ -198,6 +198,7 @@ module.exports = async (req, res) => {
         updateFields.notes = req.body.task.notes || '';
       }
       updateFields.updatedAt = new Date();
+      updateFields.lastModified = new Date();
 
       const result = await collection.updateOne({ id: taskId }, { $set: updateFields });
       if (!result.matchedCount) {
