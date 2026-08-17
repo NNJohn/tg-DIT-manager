@@ -461,6 +461,11 @@ function deleteTask(taskId, button) {
   });
 }
 
+function getNotesFromForm() {
+  const notesInput = document.getElementById('form-notes');
+  return notesInput ? notesInput.value.trim() : '';
+}
+
 // ============================================================
 // Модальное окно создания/редактирования задачи
 // ============================================================
@@ -483,6 +488,10 @@ function openEditTask(taskId) {
   
   document.getElementById('form-status').value = task.status || 'todo';
   document.getElementById('form-priority').value = task.priority || 'medium';
+  
+  // Заполняем заметки
+  const notesInput = document.getElementById('form-notes');
+  if (notesInput) notesInput.value = task.notes || '';
 
   // Определяем режим срока
   if (isIsoDateValue(task.deadline)) {
@@ -503,6 +512,7 @@ function saveTask() {
   const deadline = getTaskDeadlineValue();
   const status = document.getElementById('form-status').value;
   const priority = document.getElementById('form-priority').value;
+  const notes = getNotesFromForm();
 
   if (!text) {
     if (tg && typeof tg.showAlert === 'function') {
@@ -521,9 +531,9 @@ function saveTask() {
 
   try {
     if (isCreate) {
-      saveNewTask(text, executor, deadline, status, priority);
+      saveNewTask(text, executor, deadline, status, priority, notes);
     } else {
-      updateExistingTask(text, executor, deadline, status, priority);
+      updateExistingTask(text, executor, deadline, status, priority, notes);
     }
   } finally {
     if (saveButton) {
@@ -533,14 +543,14 @@ function saveTask() {
   }
 }
 
-async function saveNewTask(text, executor, deadline, status, priority) {
+async function saveNewTask(text, executor, deadline, status, priority, notes) {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       initData: tg.initData,
       action: 'create',
-      task: { text: text, executor: executor, deadline: deadline, status: status, priority: priority }
+      task: { text: text, executor: executor, deadline: deadline, status: status, priority: priority, notes: notes }
     })
   });
 
@@ -554,7 +564,7 @@ async function saveNewTask(text, executor, deadline, status, priority) {
   closeTaskForm();
 }
 
-async function updateExistingTask(text, executor, deadline, status, priority) {
+async function updateExistingTask(text, executor, deadline, status, priority, notes) {
   const response = await fetch(API_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -562,7 +572,7 @@ async function updateExistingTask(text, executor, deadline, status, priority) {
       initData: tg.initData,
       action: 'update',
       taskId: editingTaskId,
-      task: { text: text, executor: executor, deadline: deadline, status: status, priority: priority }
+      task: { text: text, executor: executor, deadline: deadline, status: status, priority: priority, notes: notes }
     })
   });
 
@@ -610,6 +620,7 @@ function resetTaskForm() {
   const priorityInput = document.getElementById('form-priority');
   const dateInput = document.getElementById('form-deadline-date');
   const sprintInput = document.getElementById('form-deadline-sprint');
+  const notesInput = document.getElementById('form-notes');
   const modalTitle = document.getElementById('modal-title');
 
   editingTaskId = null;
@@ -619,6 +630,7 @@ function resetTaskForm() {
   if (priorityInput) priorityInput.value = 'medium';
   if (dateInput) dateInput.value = '';
   if (sprintInput) sprintInput.value = '';
+  if (notesInput) notesInput.value = '';
   if (modalTitle) modalTitle.innerText = 'Новая задача';
   setDeadlineMode('date');
 }
@@ -776,9 +788,9 @@ async function drop(event, newStatus) {
 async function exportToExcel() {
   if (!tg) return;
 
-  // Меням текст на кнопке, чтобы пользователь видел статус
-  const excelBtn = document.querySelector("button[onclick='exportToExcel()']");
-  if (excelBtn) excelBtn.innerText = "Синхронизация...";
+  const excelBtn = document.getElementById('excel-export-btn');
+  if (excelBtn) excelBtn.classList.add('excel-syncing');
+  excelBtn.disabled = true;
 
   try {
     var response = await fetch(API_URL, {
@@ -786,7 +798,7 @@ async function exportToExcel() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         initData: tg.initData,
-        action: 'sync_google' // Отправляем команду на бэкенд
+        action: 'sync_google'
       })
     });
 
@@ -803,7 +815,10 @@ async function exportToExcel() {
   } catch (e) {
     alert("Ошибка соединения с сервером.");
   } finally {
-    if (excelBtn) excelBtn.innerText = "Excel";
+    if (excelBtn) {
+      excelBtn.classList.remove('excel-syncing');
+      excelBtn.disabled = false;
+    }
   }
 }
 

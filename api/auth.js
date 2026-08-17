@@ -170,6 +170,7 @@ module.exports = async (req, res) => {
         executor: req.body.task.executor || '—',
         deadline: req.body.task.deadline || '—',
         priority: validPriorities.includes(req.body.task.priority) ? req.body.task.priority : 'medium',
+        notes: req.body.task.notes || '',
         createdAt: new Date()
       };
       await collection.insertOne(newTask);
@@ -192,6 +193,7 @@ module.exports = async (req, res) => {
         updateFields.executor = req.body.task.executor || '—';
         updateFields.deadline = req.body.task.deadline || '—';
         updateFields.priority = validPriorities.includes(req.body.task.priority) ? req.body.task.priority : 'medium';
+        updateFields.notes = req.body.task.notes || '';
       }
       updateFields.updatedAt = new Date();
 
@@ -282,7 +284,7 @@ module.exports = async (req, res) => {
       };
 
       // Строка 1 принадлежит пользователю и никогда не перезаписывается.
-      // Notes станет отдельным шестым столбцом в следующей итерации.
+      // Заметки — 7-й столбец (G).
       const rows = [];
 
       dbTasks.forEach(t => {
@@ -292,7 +294,8 @@ module.exports = async (req, res) => {
           t.author,
           t.executor || '—',
           formatDueDate(t.deadline),
-          priorityLabels[t.priority] || 'Средний'
+          priorityLabels[t.priority] || 'Средний',
+          t.notes || ''
         ]);
       });
 
@@ -423,7 +426,7 @@ module.exports = async (req, res) => {
                   startRowIndex: currentRange.startRowIndex ?? 0,
                   endRowIndex: requiredEndRow,
                   startColumnIndex: currentRange.startColumnIndex ?? 0,
-                  endColumnIndex: currentRange.endColumnIndex ?? 7
+                  endColumnIndex: currentRange.endColumnIndex ?? 8
                 }
               },
               fields: 'range'

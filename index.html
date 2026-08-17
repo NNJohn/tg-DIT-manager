@@ -113,6 +113,46 @@
       display: flex;
       gap: 8px;
       flex-shrink: 0;
+      align-items: center;
+    }
+
+    #excel-export-btn {
+      width: 40px;
+      height: 40px;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    #excel-export-btn .excel-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.3s ease;
+    }
+
+    #excel-export-btn.excel-syncing .excel-icon {
+      animation: spin 1s linear infinite;
+    }
+
+    #excel-export-btn .excel-text {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
 
     .board {
@@ -392,6 +432,11 @@
       line-height: 1.5;
     }
 
+    #form-notes {
+      min-height: 80px;
+      max-height: 200px;
+    }
+
     .field-group input:focus,
     .field-group select:focus,
     .field-group textarea:focus {
@@ -554,10 +599,21 @@
 
         <button
           type="button"
+          id="excel-export-btn"
           class="btn-secondary"
           onclick="exportToExcel()"
+          title="Экспорт в Google Sheets"
         >
-          Excel
+          <span class="excel-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+          </span>
+          <span class="excel-text">Excel</span>
         </button>
 
       </div>
@@ -757,19 +813,28 @@
               </select>
             </div>
 
-            <div class="field-group">
-              <label for="form-priority">Приоритет</label>
-              <select id="form-priority">
-                <option value="low">Низкий</option>
-                <option value="medium" selected>Средний</option>
-                <option value="high">Высокий</option>
-                <option value="critical">Критический</option>
-              </select>
-            </div>
-          </div>
-
           <div class="field-group">
-            <label>Срок</label>
+            <label for="form-priority">Приоритет</label>
+            <select id="form-priority">
+              <option value="low">Низкий</option>
+              <option value="medium" selected>Средний</option>
+              <option value="high">Высокий</option>
+              <option value="critical">Критический</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="form-notes">Заметки</label>
+          <textarea
+            id="form-notes"
+            placeholder="Комментарии к задаче (необязательно)"
+            maxlength="5000"
+          ></textarea>
+        </div>
+
+        <div class="field-group">
+          <label>Срок</label>
             <div
               class="segmented-control"
               role="tablist"
@@ -827,7 +892,6 @@
             Сохранить
           </button>
         </div>
-      </div>
     </div>
 
   </div>
@@ -840,7 +904,7 @@
        в Telegram WebView после нового deployment.
        ======================================================== -->
 
-  <script src="./script.js?v=20260817-3"></script>
+  <script src="./script.js?v=20260817-4"></script>
 
 </body>
 </html>
