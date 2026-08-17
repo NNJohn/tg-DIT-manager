@@ -210,29 +210,25 @@
     }
 
     .board {
-      display: flex;
+      display: block;
+    }
+
+    .board.hidden {
+      display: none;
+    }
+
+    #list-view {
+      display: none;
       flex-direction: column;
-      gap: 12px;
+      gap: 8px;
     }
 
-    .board.view-list .column {
-      margin-bottom: 8px;
+    #list-view.active {
+      display: flex;
     }
 
-    .board.view-list .column-title {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      padding: 6px 0;
-      background: var(--tg-theme-secondary-bg-color);
-    }
-
-    .board.view-list .task-list {
-      gap: 6px;
-    }
-
-    .board.view-list .task-card {
-      margin-bottom: 2px;
+    #list-view .task-card {
+      width: 100%;
     }
 
     .column {
@@ -814,6 +810,12 @@
       </div>
 
     </div>
+
+    <!-- ======================================================
+         Список (альтернативный вид)
+         ====================================================== -->
+
+    <div id="list-view"></div>
 
     <details
       id="devtools"

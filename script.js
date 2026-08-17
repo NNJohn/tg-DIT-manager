@@ -46,12 +46,21 @@ function switchView(mode) {
   localStorage.setItem('viewMode', mode);
 
   const board = document.querySelector('.board');
+  const listView = document.getElementById('list-view');
   const boardBtn = document.getElementById('view-board');
   const listBtn = document.getElementById('view-list');
 
-  if (board) {
-    board.classList.toggle('view-list', mode === 'list');
+  if (mode === 'list') {
+    if (board) board.classList.add('hidden');
+    if (listView) {
+      listView.classList.add('active');
+      renderListView();
+    }
+  } else {
+    if (board) board.classList.remove('hidden');
+    if (listView) listView.classList.remove('active');
   }
+
   if (boardBtn) {
     boardBtn.classList.toggle('is-active', mode === 'board');
   }
@@ -315,6 +324,91 @@ function renderBoard() {
       listElement.appendChild(card);
     });
   }
+}
+
+// ============================================================
+// Отрисовка списка задач (без разделения по статусам)
+// ============================================================
+function renderListView() {
+  const listView = document.getElementById('list-view');
+  if (!listView) return;
+
+  listView.innerHTML = '';
+
+  // Сортируем: сначала Беклог, потом В работе, Блок, Выполнено, Отменено
+  const statusOrder = { todo: 0, progress: 1, blocked: 2, done: 3, cancelled: 4 };
+  const sortedTasks = [...tasks].sort(function(a, b) {
+    return (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99);
+  });
+
+  sortedTasks.forEach(function(task) {
+    const card = createTaskCard(task);
+    listView.appendChild(card);
+  });
+}
+
+function createTaskCard(task) {
+  const card = document.createElement('div');
+  card.className = 'task-card priority-' + task.priority;
+  card.draggable = true;
+  card.ondragstart = function(event) {
+    event.dataTransfer.setData('text/plain', task.id);
+  };
+
+  const taskText = document.createElement('div');
+  taskText.className = 'task-text';
+  taskText.innerText = task.text;
+
+  card.style.cursor = 'pointer';
+  card.onclick = function(event) {
+    if (event.target === taskDelete || taskDelete.contains(event.target)) {
+      return;
+    }
+    openEditTask(task.id);
+  };
+
+  const taskDelete = document.createElement('button');
+  taskDelete.className = 'task-delete';
+  taskDelete.type = 'button';
+  taskDelete.title = 'Удалить задачу';
+  taskDelete.setAttribute('aria-label', 'Удалить задачу');
+  taskDelete.innerText = '×';
+  taskDelete.draggable = false;
+  taskDelete.onclick = function(event) {
+    event.stopPropagation();
+    deleteTask(task.id, taskDelete);
+  };
+
+  const taskHeader = document.createElement('div');
+  taskHeader.className = 'task-header';
+  taskHeader.appendChild(taskText);
+  taskHeader.appendChild(taskDelete);
+
+  const taskAuthor = document.createElement('div');
+  taskAuthor.className = 'task-meta';
+  taskAuthor.innerText = 'От: ' + task.author + ' | Исполнитель: ' + (task.executor || '—');
+
+  const taskStatus = document.createElement('div');
+  taskStatus.className = 'task-meta';
+  const statusLabels = {
+    todo: 'Беклог',
+    progress: 'В работе',
+    blocked: 'Блок',
+    done: 'Выполнено',
+    cancelled: 'Отменено'
+  };
+  taskStatus.innerText = 'Статус: ' + (statusLabels[task.status] || task.status);
+
+  const taskDeadline = document.createElement('div');
+  taskDeadline.className = 'task-deadline';
+  taskDeadline.innerText =
+    getDeadlineLabel(task.deadline) + ': ' + formatDeadlineDisplay(task.deadline);
+
+  card.appendChild(taskHeader);
+  card.appendChild(taskAuthor);
+  card.appendChild(taskStatus);
+  card.appendChild(taskDeadline);
+  return card;
 }
 
 // ============================================================
