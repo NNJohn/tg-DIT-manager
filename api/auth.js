@@ -252,10 +252,15 @@ module.exports = async (req, res) => {
       });
 
       // Автоматически определяем имя первого листа таблицы (Лист1 или Sheet1)
-      const spreadsheetInfo = await sheets.spreadsheets.get({ spreadsheetId });
-      const firstSheet = spreadsheetInfo.data.sheets[0].properties;
+      const spreadsheetInfo = await sheets.spreadsheets.get({
+        spreadsheetId,
+        fields: 'sheets(properties(title,sheetId),tables(tableId,range,columnProperties))'
+      });
+      const firstSheetData = spreadsheetInfo.data.sheets[0];
+      const firstSheet = firstSheetData.properties;
       const firstSheetName = firstSheet.title;
       const firstSheetId = firstSheet.sheetId;
+      const sheetTable = (firstSheetData.tables || [])[0] || null;
 
       const teamMembers = await db.collection('team_members')
         .find({}, { projection: { _id: 0, telegramId: 1, displayName: 1, telegramFirstName: 1, telegramLastName: 1, telegramUsername: 1, team: 1 } })
@@ -307,6 +312,110 @@ module.exports = async (req, res) => {
         inputMessage
       });
 
+      const tableDropdownRule = (values) => ({
+        condition: {
+          type: 'ONE_OF_LIST',
+          values: values.map(value => ({ userEnteredValue: value }))
+        }
+      });
+
+      const buildTableValidationRequests = () => {
+        if (!sheetTable) return [];
+
+        const dropdownOptionsByColumnName = {
+          'Статус': Object.values(statusLabels),
+          'Автор': memberOptions,
+          'Исполнитель': memberOptions,
+          'Приоритет': Object.values(priorityLabels)
+        };
+
+        const dropdownOptionsByColumnIndex = {
+          1: Object.values(statusLabels),
+          2: memberOptions,
+          3: memberOptions,
+          5: Object.values(priorityLabels)
+        };
+
+        const updatedColumnProperties = (sheetTable.columnProperties || [])
+          .filter((column) => column.columnType === 'DROPDOWN')
+          .map((column) => {
+            const options =
+              dropdownOptionsByColumnName[column.columnName] ??
+              dropdownOptionsByColumnIndex[column.columnIndex];
+            if (!options) return null;
+
+            return {
+              columnIndex: column.columnIndex,
+              columnType: 'DROPDOWN',
+              dataValidationRule: tableDropdownRule(options)
+            };
+          })
+          .filter(Boolean);
+
+        const requests = [];
+
+        if (updatedColumnProperties.length) {
+          requests.push({
+            updateTable: {
+              table: {
+                tableId: sheetTable.tableId,
+                columnProperties: updatedColumnProperties
+              },
+              fields: 'columnProperties'
+            }
+          });
+        }
+
+        const requiredEndRow = 1 + rows.length;
+        const currentRange = sheetTable.range || {};
+        if ((currentRange.endRowIndex || 0) < requiredEndRow) {
+          requests.push({
+            updateTable: {
+              table: {
+                tableId: sheetTable.tableId,
+                range: {
+                  sheetId: firstSheetId,
+                  startRowIndex: currentRange.startRowIndex ?? 0,
+                  endRowIndex: requiredEndRow,
+                  startColumnIndex: currentRange.startColumnIndex ?? 0,
+                  endColumnIndex: currentRange.endColumnIndex ?? 7
+                }
+              },
+              fields: 'range'
+            }
+          });
+        }
+
+        return requests;
+      };
+
+      const buildLegacyValidationRequests = () => ([
+        {
+          setDataValidation: {
+            range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 1, endColumnIndex: 2 },
+            rule: dropdownRule(Object.values(statusLabels), 'Выберите статус задачи.')
+          }
+        },
+        {
+          setDataValidation: {
+            range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 2, endColumnIndex: 3 },
+            rule: dropdownRule(memberOptions, 'Выберите автора из справочника.')
+          }
+        },
+        {
+          setDataValidation: {
+            range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 3, endColumnIndex: 4 },
+            rule: dropdownRule(memberOptions, 'Выберите исполнителя из справочника.')
+          }
+        },
+        {
+          setDataValidation: {
+            range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 5, endColumnIndex: 6 },
+            rule: dropdownRule(Object.values(priorityLabels), 'Выберите приоритет задачи.')
+          }
+        }
+      ]);
+
       // Очищаем только строки с задачами, не затрагивая заголовки в строке 1.
       await sheets.spreadsheets.values.clear({
         spreadsheetId,
@@ -323,38 +432,23 @@ module.exports = async (req, res) => {
         });
       }
 
-      // Dropdown для статуса, автора и исполнителя — со второй строки и ниже.
-      await sheets.spreadsheets.batchUpdate({
-        spreadsheetId,
-        resource: {
-          requests: [
-            {
-              setDataValidation: {
-                range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 1, endColumnIndex: 2 },
-                rule: dropdownRule(Object.values(statusLabels), 'Выберите статус задачи.')
-              }
-            },
-            {
-              setDataValidation: {
-                range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 2, endColumnIndex: 3 },
-                rule: dropdownRule(memberOptions, 'Выберите автора из справочника.')
-              }
-            },
-            {
-              setDataValidation: {
-                range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 3, endColumnIndex: 4 },
-                rule: dropdownRule(memberOptions, 'Выберите исполнителя из справочника.')
-              }
-            },
-            {
-              setDataValidation: {
-                range: { sheetId: firstSheetId, startRowIndex: 1, endRowIndex: 1000, startColumnIndex: 5, endColumnIndex: 6 },
-                rule: dropdownRule(Object.values(priorityLabels), 'Выберите приоритет задачи.')
-              }
-            }
-          ]
+      // Typed Google Sheets tables reject setDataValidation on their columns.
+      // Refresh dropdown options through updateTable when a table is present.
+      const validationRequests = sheetTable
+        ? buildTableValidationRequests()
+        : buildLegacyValidationRequests();
+
+      if (validationRequests.length) {
+        try {
+          await sheets.spreadsheets.batchUpdate({
+            spreadsheetId,
+            resource: { requests: validationRequests }
+          });
+        } catch (validationErr) {
+          if (!sheetTable) throw validationErr;
+          console.warn('Google Sheets table metadata update skipped:', validationErr.message);
         }
-      });
+      }
 
       return res.status(200).json({ success: true });
     }
