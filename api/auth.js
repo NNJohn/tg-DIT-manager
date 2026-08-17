@@ -283,10 +283,39 @@ module.exports = async (req, res) => {
         return isoDate ? `${isoDate[3]}.${isoDate[2]}.${isoDate[1]}` : deadline;
       };
 
+      const formatDueDateBack = (displayDate) => {
+        if (!displayDate || !String(displayDate).trim()) return '';
+        const parts = String(displayDate).match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+        if (!parts) return displayDate;
+        const day = parts[1].padStart(2, '0');
+        const month = parts[2].padStart(2, '0');
+        const year = parts[3];
+        return `${year}-${month}-${day}`;
+      };
+
+      // ============================================================
+      // Находим лист "Открытые Вопросы" или берём первый
+      // ============================================================
+      const spreadsheetInfo = await sheets.spreadsheets.get({
+        spreadsheetId,
+        fields: 'sheets(properties(title,sheetId),tables(tableId,range,columnProperties))'
+      });
+      const sheetsList = spreadsheetInfo.data.sheets || [];
+      
+      const TARGET_SHEET_NAME = 'Открытые Вопросы';
+      const targetSheetData = sheetsList.find(s => s.properties.title === TARGET_SHEET_NAME) || sheetsList[0];
+      if (!targetSheetData) {
+        return res.status(400).json({ success: true, message: 'Таблица пуста' });
+      }
+      
+      const sheetName = targetSheetData.properties.title;
+      const sheetId = targetSheetData.properties.sheetId;
+      const sheetTable = (targetSheetData.tables || [])[0] || null;
+
       // ============================================================
       // ОБРАТНАЯ СИНХРОНИЗАЦИЯ: Sheets → MongoDB
       // ============================================================
-      const sheetRange = `${firstSheetName}!A:G`;
+      const sheetRange = `${sheetName}!A:G`;
       const sheetResponse = await sheets.spreadsheets.values.get({
         spreadsheetId,
         range: sheetRange
