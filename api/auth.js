@@ -417,17 +417,6 @@ module.exports = async (req, res) => {
         ]);
       });
 
-      // Автоматически определяем имя первого листа таблицы (Лист1 или Sheet1)
-      const spreadsheetInfo = await sheets.spreadsheets.get({
-        spreadsheetId,
-        fields: 'sheets(properties(title,sheetId),tables(tableId,range,columnProperties))'
-      });
-      const firstSheetData = spreadsheetInfo.data.sheets[0];
-      const firstSheet = firstSheetData.properties;
-      const firstSheetName = firstSheet.title;
-      const firstSheetId = firstSheet.sheetId;
-      const sheetTable = (firstSheetData.tables || [])[0] || null;
-
       const teamMembers = await db.collection('team_members')
         .find({}, { projection: { _id: 0, telegramId: 1, displayName: 1, telegramFirstName: 1, telegramLastName: 1, telegramUsername: 1 } })
         .toArray();
@@ -585,14 +574,14 @@ module.exports = async (req, res) => {
       // Очищаем только строки с задачами, не затрагивая заголовки в строке 1.
       await sheets.spreadsheets.values.clear({
         spreadsheetId,
-        range: `${firstSheetName}!A2:Z1000`
+        range: `${sheetName}!A2:Z1000`
       });
 
       // Записываем задачи, начиная строго со второй строки.
       if (rows.length) {
         await sheets.spreadsheets.values.update({
           spreadsheetId,
-          range: `${firstSheetName}!A2`,
+          range: `${sheetName}!A2`,
           valueInputOption: 'RAW',
           resource: { values: rows }
         });
