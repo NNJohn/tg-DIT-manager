@@ -412,6 +412,11 @@ module.exports = async (req, res) => {
           existing = dbIdMap[sheetTask.sheetId];
         }
         
+        // Если не нашли по ID и в Sheets нет ID — ищем по тексту (fallback)
+        if (!existing && !sheetTask.sheetId) {
+          existing = dbTasks.find(t => t.text === sheetTask.text);
+        }
+        
         // Если нашли по тексту, но в Sheets нет ID — генерируем новый ID
         if (existing && !sheetTask.sheetId) {
           const newId = 'task_' + Date.now().toString() + '_' + Math.random().toString(36).substr(2, 9);
