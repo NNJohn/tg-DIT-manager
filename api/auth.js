@@ -213,16 +213,75 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true });
     }
 
-    // МАРШРУТ 4: Удаление задачи
-    if (req.method === 'DELETE') {
+    // МАРШРУТ 4: Удаление задачи с удалением строки из Google Sheets
+    if (req.method === 'POST' && req.body.action === 'delete_task') {
       const { taskId } = req.body || {};
       if (!taskId) {
         return res.status(400).json({ error: 'Не указан идентификатор задачи.' });
       }
 
+      const task = await collection.findOne({ id: taskId });
       const result = await collection.deleteOne({ id: taskId });
       if (!result.deletedCount) {
         return res.status(404).json({ error: 'Задача не найдена.' });
+      }
+
+      // Удаляем строку из Sheets если подключена таблица
+      try {
+        const privateKey = (process.env.GOOGLE_PRIVATE_KEY || '').trim().replace(/^["']|["']$/g, '');
+        if (privateKey && process.env.GOOGLE_SPREADSHEET_ID) {
+          if (privateKey.includes('\\n')) {
+            privateKey.replace(/\\n/g, '\n');
+          } else {
+            privateKey.split(/\r?\n/).join('\n');
+          }
+          
+          const auth = new google.auth.JWT(
+            process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+            null,
+            privateKey,
+            ['https://www.googleapis.com/auth/spreadsheets']
+          );
+          const sheets = google.sheets({ version: 'v4', auth });
+          const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID;
+          
+          const spreadsheetInfo = await sheets.spreadsheets.get({
+            spreadsheetId,
+            fields: 'sheets(properties(title))'
+          });
+          const sheetsList = spreadsheetInfo.data.sheets || [];
+          const targetSheetName = sheetsList.find(s => s.properties.title === 'Открытые Вопросы') || sheetsList[0];
+          if (targetSheetName) {
+            const sheetTitle = targetSheetName.properties.title;
+            // Читаем все данные
+            const sheetData = await sheets.spreadsheets.values.get({
+              spreadsheetId,
+              range: `${sheetTitle}!A:G`
+            });
+            const rows = sheetData.data.values || [];
+            // Фильтруем строку с задачей (по тексту)
+            const filteredRows = rows.filter((row, index) => {
+              if (index === 0) return true; // оставляем заголовок
+              if (!row || !row[0]) return false;
+              return String(row[0]).trim() !== task.text;
+            });
+            // Перезаписываем таблицу без удалённой задачи
+            await sheets.spreadsheets.values.clear({
+              spreadsheetId,
+              range: `${sheetTitle}!A2:G1000`
+            });
+            if (filteredRows.length > 1) {
+              await sheets.spreadsheets.values.update({
+                spreadsheetId,
+                range: `${sheetTitle}!A2`,
+                valueInputOption: 'RAW',
+                resource: { values: filteredRows.slice(1) }
+              });
+            }
+          }
+        }
+      } catch (sheetErr) {
+        console.warn('Не удалось удалить строку из Sheets:', sheetErr.message);
       }
 
       return res.status(200).json({ success: true });
@@ -447,7 +506,7 @@ module.exports = async (req, res) => {
       const memberOptions = Array.from(new Set([
         '—',
         ...teamMembers.map(formatMemberLabel),
-        ...dbTasks.flatMap(task => [task.author, task.executor]).filter(value => value && value !== '—')
+        ...currentDbTasks.flatMap(task => [task.author, task.executor]).filter(value => value && value !== '—')
       ]));
 
       const dropdownRule = (values, inputMessage) => ({
