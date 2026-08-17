@@ -283,16 +283,6 @@ module.exports = async (req, res) => {
         return isoDate ? `${isoDate[3]}.${isoDate[2]}.${isoDate[1]}` : deadline;
       };
 
-      const formatDueDateBack = (displayDate) => {
-        if (!displayDate || !String(displayDate).trim()) return '';
-        const parts = String(displayDate).match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-        if (!parts) return displayDate;
-        const day = parts[1].padStart(2, '0');
-        const month = parts[2].padStart(2, '0');
-        const year = parts[3];
-        return `${year}-${month}-${day}`;
-      };
-
       // ============================================================
       // Находим лист "Открытые Вопросы" или берём первый
       // ============================================================
@@ -333,7 +323,7 @@ module.exports = async (req, res) => {
           status: Object.keys(statusLabels).find(k => statusLabels[k] === (row[1] || 'Беклог')) || 'todo',
           author: row[2] || '',
           executor: row[3] || '—',
-          deadline: formatDueDateBack(row[4]) || '—',
+          deadline: row[4] || '—',
           priority: Object.keys(priorityLabels).find(k => priorityLabels[k] === (row[5] || 'Средний')) || 'medium',
           notes: row[6] ? String(row[6]).trim() : ''
         });
