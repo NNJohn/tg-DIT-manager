@@ -217,6 +217,21 @@
       display: none;
     }
 
+    /* Список скрыт по умолчанию, показывается только с .active */
+    #list-view {
+      display: none !important;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+      background-color: #0A0B0E;
+      border-radius: var(--radius-md);
+      padding: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    #list-view.active {
+      display: flex !important;
+    }
 
     @media (min-width: 600px) {
       .board {
@@ -246,18 +261,6 @@
         background: var(--tg-theme-hint-color);
       }
 
-    .column {
-      min-height: 100px;
-    }
-    }
-
-    /* Вертикальная раскладка - колонки на всю ширину */
-    @media (max-width: 599px) {
-      .board {
-        flex-direction: column;
-        gap: 12px;
-      }
-
       .column {
         flex: 0 0 280px;
         min-width: 280px;
@@ -279,21 +282,6 @@
         min-width: 0;
         min-height: 50px;
       }
-    }
-    }
-
-    #list-view {
-      display: none;
-      flex-direction: column;
-      gap: 8px;
-      background-color: #0A0B0E;
-      border-radius: var(--radius-md);
-      padding: 12px;
-      border: 1px solid var(--border-color);
-    }
-
-    #list-view.active {
-      display: flex;
     }
 
     #list-view .task-card {
@@ -348,9 +336,7 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      flex: 0 0 280px;
-      min-width: 280px;
-      min-height: 200px;
+      min-height: 50px;
       border: 1px solid var(--border-color);
     }
 
@@ -531,7 +517,7 @@
       color: var(--tg-theme-text-color);
       font-size: 14px;
       font-weight: 700;
-      padding-right: 32px;
+      padding-right: 36px;
     }
 
     .task-delete {
@@ -548,8 +534,8 @@
       width: 24px;
       height: 24px;
       position: absolute;
-      top: 4px;
-      right: 4px;
+      top: 2px;
+      right: 2px;
     }
 
     .task-delete:hover {
@@ -559,7 +545,7 @@
     .task-delete svg {
       width: 16px;
       height: 16px;
-      stroke: #565D68;
+      stroke: #B85252;
       stroke-width: 2;
     }
 

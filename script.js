@@ -7,6 +7,11 @@ let isDeveloper = false;
 let deadlineMode = 'date';
 let editingTaskId = null;
 let currentView = localStorage.getItem('viewMode') || 'board';
+// Если сохранён 'list', сбросим на 'board' — доска всегда основная
+if (currentView === 'list') {
+  currentView = 'board';
+  localStorage.removeItem('viewMode');
+}
 
 const tg =
   window.Telegram && window.Telegram.WebApp
@@ -342,8 +347,8 @@ function createTaskCard(task) {
     event.stopPropagation();
     deleteTask(task.id, taskDelete);
   };
-  // SVG иконка корзины 16x16
-  taskDelete.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 4h10l-.6 7.2A2 2 0 0 1 10.4 13H5.6a2 2 0 0 1-2-1.8L3 4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 4h13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M6 7v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 7v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  // SVG иконка корзины с крышкой 16x16
+  taskDelete.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 4h11l-.5 6.5a1.5 1.5 0 0 1-1.5 1.3H4.5a1.5 1.5 0 0 1-1.5-1.3L2.5 4Z" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 4h13" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M6 7v3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M10 7v3.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><rect x="5.5" y="3" width="5" height="1.5" rx="0.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
   header.appendChild(taskDelete);
   content.appendChild(header);
 
@@ -943,23 +948,28 @@ async function drop(event, newStatus) {
 // ============================================================
 // Excel Экспорт и синхронизация с Google Sheets
 // ============================================================
+let syncTimeoutId = null;
+
 function showSyncIndicator(success) {
   const excelBtn = document.getElementById('excel-export-btn');
   if (!excelBtn) return;
   
   if (!success) return;
   
-  // Сохраняем исходные стили для корректного восстановления
+  // Сброс предыдущего таймера если есть
+  if (syncTimeoutId) {
+    clearTimeout(syncTimeoutId);
+  }
+  
+  // Сохраняем исходные стили
   const computedStyle = getComputedStyle(excelBtn);
-  excelBtn.style.setProperty('--saved-bg-color', computedStyle.backgroundColor);
-  excelBtn.style.setProperty('--saved-color', computedStyle.color);
-  excelBtn.style.setProperty('--saved-border', computedStyle.borderColor);
   
   excelBtn.style.setProperty('background-color', 'var(--tg-theme-accent-color)');
   excelBtn.style.setProperty('border-color', 'var(--tg-theme-accent-color)');
   excelBtn.style.setProperty('color', '#FFFFFF');
   
-  setTimeout(function() {
+  syncTimeoutId = setTimeout(function() {
+    syncTimeoutId = null;
     excelBtn.style.removeProperty('background-color');
     excelBtn.style.removeProperty('border-color');
     excelBtn.style.removeProperty('color');
