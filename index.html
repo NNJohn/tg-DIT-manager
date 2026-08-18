@@ -41,6 +41,29 @@
       box-sizing: border-box;
     }
 
+    /* Reset default button/input styles to remove bevel */
+    button, input, select, textarea {
+      box-shadow: none;
+    }
+
+    button:not(.view-switcher button):not(.segmented-control button) {
+      border: none;
+      background: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    input, select, textarea {
+      border: 1px solid var(--border-color);
+      box-shadow: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--tg-theme-button-color);
+      box-shadow: none;
+      outline: none;
+    }
+
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background-color: #0A0B0E;
@@ -73,6 +96,7 @@
       align-items: center;
       gap: 4px;
       height: 32px;
+      border: 1px solid var(--border-color);
     }
 
     .btn-primary svg {
@@ -629,6 +653,7 @@
       background: var(--tg-theme-bg-color);
       color: var(--tg-theme-text-color);
       font: inherit;
+      border: 1px solid var(--border-color);
     }
 
     .field-group textarea {
