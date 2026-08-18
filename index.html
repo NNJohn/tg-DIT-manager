@@ -175,33 +175,7 @@
     }
 
     #excel-export-btn .sync-indicator {
-      position: absolute;
-      top: -4px;
-      right: -4px;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 10px;
-      font-weight: bold;
-      color: white;
-      opacity: 0;
-      transform: scale(0);
-      transition: all 0.3s ease;
-    }
-
-    #excel-export-btn.excel-success .sync-indicator {
-      background: var(--tg-theme-accent-color);
-      opacity: 1;
-      transform: scale(1);
-    }
-
-    #excel-export-btn.excel-error .sync-indicator {
-      background: #FF4D4D;
-      opacity: 1;
-      transform: scale(1);
+      display: none;
     }
 
     @keyframes spin {
@@ -247,11 +221,6 @@
         background: var(--tg-theme-hint-color);
       }
 
-      .column {
-        flex: 0 0 280px;
-        min-width: 280px;
-        max-width: 280px;
-      }
     }
 
     #list-view {
@@ -279,8 +248,8 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
-      flex: 1;
-      min-width: 0;
+      flex: 0 0 280px;
+      min-width: 280px;
       border: 1px solid var(--border-color);
     }
 
@@ -452,14 +421,16 @@
     .task-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       align-self: stretch;
+      position: relative;
     }
 
     .task-number {
       color: var(--tg-theme-text-color);
       font-size: 14px;
       font-weight: 700;
+      padding-right: 28px;
     }
 
     .task-delete {
@@ -475,6 +446,9 @@
       justify-content: center;
       width: 24px;
       height: 24px;
+      position: absolute;
+      top: 8px;
+      right: 8px;
     }
 
     .task-delete:hover {

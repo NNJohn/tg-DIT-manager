@@ -923,22 +923,24 @@ function showSyncIndicator(success) {
   const excelBtn = document.getElementById('excel-export-btn');
   if (!excelBtn) return;
   
-  // Убираем старые индикаторы
-  excelBtn.classList.remove('excel-syncing', 'excel-success', 'excel-error');
+  const originalBg = excelBtn.style.backgroundColor;
+  const originalColor = excelBtn.style.color;
+  const originalBorder = excelBtn.style.borderColor;
   
-  // Создаём индикатор если нет
-  let indicator = excelBtn.querySelector('.sync-indicator');
-  if (!indicator) {
-    indicator = document.createElement('span');
-    indicator.className = 'sync-indicator';
-    excelBtn.appendChild(indicator);
+  if (success) {
+    excelBtn.style.backgroundColor = 'var(--tg-theme-accent-color)';
+    excelBtn.style.borderColor = 'var(--tg-theme-accent-color)';
+    excelBtn.style.color = '#FFFFFF';
+  } else {
+    excelBtn.style.backgroundColor = '#FF4D4D';
+    excelBtn.style.borderColor = '#FF4D4D';
+    excelBtn.style.color = '#FFFFFF';
   }
   
-  // Ставим соответствующий класс
-  excelBtn.classList.add(success ? 'excel-success' : 'excel-error');
-  
   setTimeout(function() {
-    excelBtn.classList.remove('excel-success', 'excel-error');
+    excelBtn.style.backgroundColor = originalBg;
+    excelBtn.style.color = originalColor;
+    excelBtn.style.borderColor = originalBorder;
   }, 3000);
 }
 
