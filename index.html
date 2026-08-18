@@ -536,17 +536,21 @@
       position: absolute;
       top: 2px;
       right: 2px;
-    }
-
-    .task-delete:hover {
-      background: rgba(142, 148, 160, 0.15);
+      aspect-ratio: 1;
     }
 
     .task-delete svg {
       width: 16px;
       height: 16px;
       stroke: #B85252;
-      stroke-width: 2;
+      stroke-width: 1.5;
+      flex-shrink: 0;
+      display: block;
+      overflow: visible;
+    }
+
+    .task-delete:hover {
+      background: rgba(142, 148, 160, 0.15);
     }
 
     .task-meta-group {
