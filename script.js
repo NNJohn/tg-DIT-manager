@@ -921,21 +921,15 @@ async function drop(event, newStatus) {
 // ============================================================
 function showSyncIndicator(success) {
   const excelBtn = document.getElementById('excel-export-btn');
-  if (!excelBtn) return;
+  if (!excelBtn || !success) return;
   
   const originalBg = excelBtn.style.backgroundColor;
   const originalColor = excelBtn.style.color;
   const originalBorder = excelBtn.style.borderColor;
   
-  if (success) {
-    excelBtn.style.backgroundColor = 'var(--tg-theme-accent-color)';
-    excelBtn.style.borderColor = 'var(--tg-theme-accent-color)';
-    excelBtn.style.color = '#FFFFFF';
-  } else {
-    excelBtn.style.backgroundColor = '#FF4D4D';
-    excelBtn.style.borderColor = '#FF4D4D';
-    excelBtn.style.color = '#FFFFFF';
-  }
+  excelBtn.style.backgroundColor = 'var(--tg-theme-accent-color)';
+  excelBtn.style.borderColor = 'var(--tg-theme-accent-color)';
+  excelBtn.style.color = '#FFFFFF';
   
   setTimeout(function() {
     excelBtn.style.backgroundColor = originalBg;
