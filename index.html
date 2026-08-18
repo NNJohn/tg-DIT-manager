@@ -246,11 +246,23 @@
         background: var(--tg-theme-hint-color);
       }
 
+    .column {
+      min-height: 100px;
+    }
+    }
+
+    /* Вертикальная раскладка - колонки на всю ширину */
+    @media (max-width: 599px) {
+      .board {
+        flex-direction: column;
+        gap: 12px;
+      }
+
       .column {
         flex: 0 0 280px;
         min-width: 280px;
         max-width: 280px;
-        min-height: 200px;
+        min-height: 100px;
       }
     }
 
@@ -265,8 +277,9 @@
         flex: none;
         width: 100%;
         min-width: 0;
-        min-height: 100px;
+        min-height: 50px;
       }
+    }
     }
 
     #list-view {
@@ -518,7 +531,7 @@
       color: var(--tg-theme-text-color);
       font-size: 14px;
       font-weight: 700;
-      padding-right: 28px;
+      padding-right: 32px;
     }
 
     .task-delete {
@@ -535,8 +548,8 @@
       width: 24px;
       height: 24px;
       position: absolute;
-      top: 8px;
-      right: 8px;
+      top: 4px;
+      right: 4px;
     }
 
     .task-delete:hover {
@@ -667,6 +680,7 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      border: 1px solid var(--border-color);
     }
 
     .modal-body {
@@ -752,12 +766,13 @@
     }
 
     .segmented-control {
-      display: flex;
+      display: inline-flex;
       padding: 2px;
       border-radius: 8px;
       background: var(--tg-theme-bg-color);
       border: 1px solid var(--border-color);
       gap: 2px;
+      align-self: flex-start;
     }
 
     .segmented-control button {

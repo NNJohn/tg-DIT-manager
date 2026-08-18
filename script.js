@@ -342,8 +342,8 @@ function createTaskCard(task) {
     event.stopPropagation();
     deleteTask(task.id, taskDelete);
   };
-  // SVG крестик 16x16
-  taskDelete.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4L12 12M12 4L4 12M8 1.333C4.309 1.333 1.333 4.309 1.333 8C1.333 11.691 4.309 14.667 8 14.667C11.691 14.667 14.667 11.691 14.667 8C14.667 4.309 11.691 1.333 8 1.333Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  // SVG иконка корзины 16x16
+  taskDelete.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 4h10l-.6 7.2A2 2 0 0 1 10.4 13H5.6a2 2 0 0 1-2-1.8L3 4Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 4h13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M6 7v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M10 7v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
   header.appendChild(taskDelete);
   content.appendChild(header);
 
@@ -945,20 +945,24 @@ async function drop(event, newStatus) {
 // ============================================================
 function showSyncIndicator(success) {
   const excelBtn = document.getElementById('excel-export-btn');
-  if (!excelBtn || !success) return;
+  if (!excelBtn) return;
   
-  const originalBg = excelBtn.style.backgroundColor;
-  const originalColor = excelBtn.style.color;
-  const originalBorder = excelBtn.style.borderColor;
+  if (!success) return;
   
-  excelBtn.style.backgroundColor = 'var(--tg-theme-accent-color)';
-  excelBtn.style.borderColor = 'var(--tg-theme-accent-color)';
-  excelBtn.style.color = '#FFFFFF';
+  // Сохраняем исходные стили для корректного восстановления
+  const computedStyle = getComputedStyle(excelBtn);
+  excelBtn.style.setProperty('--saved-bg-color', computedStyle.backgroundColor);
+  excelBtn.style.setProperty('--saved-color', computedStyle.color);
+  excelBtn.style.setProperty('--saved-border', computedStyle.borderColor);
+  
+  excelBtn.style.setProperty('background-color', 'var(--tg-theme-accent-color)');
+  excelBtn.style.setProperty('border-color', 'var(--tg-theme-accent-color)');
+  excelBtn.style.setProperty('color', '#FFFFFF');
   
   setTimeout(function() {
-    excelBtn.style.backgroundColor = originalBg;
-    excelBtn.style.color = originalColor;
-    excelBtn.style.borderColor = originalBorder;
+    excelBtn.style.removeProperty('background-color');
+    excelBtn.style.removeProperty('border-color');
+    excelBtn.style.removeProperty('color');
   }, 3000);
 }
 
