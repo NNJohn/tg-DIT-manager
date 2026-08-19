@@ -517,7 +517,44 @@
       color: var(--tg-theme-text-color);
       font-size: 14px;
       font-weight: 700;
-      padding-right: 36px;
+      padding-right: 80px;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 2px;
+      align-items: center;
+      position: absolute;
+      top: 2px;
+      right: 2px;
+    }
+
+    .task-edit {
+      background: transparent;
+      color: var(--tg-theme-button-color);
+      font-size: 14px;
+      line-height: 1;
+      padding: 4px;
+      flex-shrink: 0;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border: none;
+    }
+
+    .task-edit svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      display: block;
+      overflow: visible;
+    }
+
+    .task-edit:hover {
+      background: rgba(63, 120, 255, 0.15);
     }
 
     .task-delete {
@@ -531,17 +568,14 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 24px;
+      width: 16px;
       height: 24px;
-      position: absolute;
-      top: 2px;
-      right: 2px;
-      aspect-ratio: 1;
+      position: relative;
     }
 
     .task-delete svg {
-      width: 16px;
-      height: 16px;
+      width: 14px;
+      height: 14px;
       stroke: #B85252;
       stroke-width: 1.5;
       flex-shrink: 0;
@@ -551,6 +585,209 @@
 
     .task-delete:hover {
       background: rgba(142, 148, 160, 0.15);
+    }
+
+    /* Модальное окно просмотра задачи */
+    .task-view-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .task-view-overlay.is-open {
+      display: flex;
+    }
+
+    .task-view-card {
+      width: 100%;
+      max-width: 560px;
+      max-height: 85vh;
+      background: var(--tg-theme-bg-color);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      animation: scale-in 0.2s ease-out;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    @keyframes scale-in {
+      from {
+        transform: scale(0.95);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .task-view-header {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .task-view-text {
+      flex: 1;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.5;
+      color: var(--tg-theme-text-color);
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 0;
+    }
+
+    .task-view-close {
+      background: var(--tg-theme-secondary-bg-color);
+      color: var(--tg-theme-hint-color);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 1.4rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border: 1px solid var(--border-color);
+    }
+
+    .task-view-body {
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .task-view-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .task-view-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .task-view-meta-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--tg-theme-hint-color);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .task-view-meta-value {
+      font-size: 14px;
+      color: var(--tg-theme-text-color);
+      font-weight: 500;
+    }
+
+    .task-view-notes {
+      margin-top: 8px;
+      padding: 12px;
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+    }
+
+    .task-view-notes-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--tg-theme-text-color);
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 0;
+    }
+
+    .task-view-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 10px;
+    }
+
+    .task-view-footer .btn-secondary,
+    .task-view-footer .btn-primary {
+      flex: 1;
+      text-align: center;
+      justify-content: center;
+    }
+
+    .task-view-footer .btn-secondary {
+      background: var(--tg-theme-secondary-bg-color);
+      color: var(--tg-theme-hint-color);
+    }
+
+    .task-view-footer .btn-secondary:hover {
+      border-color: var(--tg-theme-hint-color);
+    }
+
+    .task-view-status-badge,
+    .task-view-priority-badge {
+      display: inline-flex;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .task-view-status-badge.status-todo {
+      background: rgba(63, 120, 255, 0.15);
+      color: #3F78FF;
+    }
+
+    .task-view-status-badge.status-progress {
+      background: rgba(255, 159, 45, 0.15);
+      color: #FF9F2D;
+    }
+
+    .task-view-status-badge.status-done {
+      background: rgba(46, 196, 182, 0.15);
+      color: #2EC4B6;
+    }
+
+    .task-view-status-badge.status-blocked {
+      background: rgba(255, 77, 77, 0.15);
+      color: #FF4D4D;
+    }
+
+    .task-view-status-badge.status-cancelled {
+      background: rgba(142, 148, 160, 0.15);
+      color: var(--tg-theme-hint-color);
+    }
+
+    .task-view-priority-badge.priority-low {
+      background: rgba(46, 196, 182, 0.15);
+      color: #2EC4B6;
+    }
+
+    .task-view-priority-badge.priority-medium {
+      background: rgba(63, 120, 255, 0.15);
+      color: #3F78FF;
+    }
+
+    .task-view-priority-badge.priority-high {
+      background: rgba(255, 159, 45, 0.15);
+      color: #FF9F2D;
+    }
+
+    .task-view-priority-badge.priority-critical {
+      background: rgba(255, 77, 77, 0.15);
+      color: #FF4D4D;
     }
 
     .task-meta-group {
@@ -1194,15 +1431,92 @@
 
   </div>
 
+  <!-- ======================================================
+       Модальное окно просмотра задачи
+       ====================================================== -->
+
+  <div
+    id="task-view-overlay"
+    class="task-view-overlay"
+    onclick="closeViewTask(event)"
+  >
+    <div
+      class="task-view-card"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="task-view-header">
+        <h3 id="task-view-text" class="task-view-text"></h3>
+        <button
+          type="button"
+          class="task-view-close"
+          aria-label="Закрыть"
+          onclick="closeViewTask()"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="task-view-body">
+        <div class="task-view-meta">
+          <div class="task-view-meta-item">
+            <span class="task-view-meta-label">Статус</span>
+            <span id="task-view-status" class="task-view-status-badge"></span>
+          </div>
+
+          <div class="task-view-meta-item">
+            <span class="task-view-meta-label">Приоритет</span>
+            <span id="task-view-priority" class="task-view-priority-badge"></span>
+          </div>
+
+          <div class="task-view-meta-item">
+            <span class="task-view-meta-label">Исполнитель</span>
+            <span id="task-view-executor" class="task-view-meta-value"></span>
+          </div>
+
+          <div class="task-view-meta-item">
+            <span class="task-view-meta-label">Срок</span>
+            <span id="task-view-deadline" class="task-view-meta-value"></span>
+          </div>
+
+          <div class="task-view-meta-item" id="task-view-notes-container" style="display: none;">
+            <span class="task-view-meta-label">Заметки</span>
+            <div class="task-view-notes">
+              <p id="task-view-notes" class="task-view-notes-text"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-view-footer">
+        <button
+          type="button"
+          class="btn-secondary"
+          onclick="closeViewTask()"
+        >
+          Закрыть
+        </button>
+        <button
+          type="button"
+          class="btn-primary"
+          id="task-view-edit-btn"
+          onclick="editFromView()"
+        >
+          Изменить
+        </button>
+      </div>
+    </div>
+  </div>
+
 
   <!-- ========================================================
-       Pocket Jira JavaScript
+        Pocket Jira JavaScript
 
-       Версия нужна для принудительного обновления файла
-       в Telegram WebView после нового deployment.
-       ======================================================== -->
+        Версия нужна для принудительного обновления файла
+        в Telegram WebView после нового deployment.
+        ======================================================== -->
 
-  <script src="./script.js?v=20260817-15"></script>
+  <script src="./script.js?v=20260819-1"></script>
 
 </body>
 </html>

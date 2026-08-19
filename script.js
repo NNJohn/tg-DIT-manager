@@ -325,18 +325,38 @@ function createTaskCard(task) {
   const content = document.createElement('div');
   content.className = 'task-card-content';
 
-  // Заголовок: текст задачи + кнопка удаления
+  // Заголовок: текст задачи + кнопки
   const header = document.createElement('div');
   header.className = 'task-header';
 
   const text = document.createElement('div');
   text.className = 'task-number';
-  text.style.maxWidth = 'calc(100% - 32px)';
+  text.style.maxWidth = 'calc(100% - 80px)';
   text.style.whiteSpace = 'pre-wrap';
   text.style.wordBreak = 'break-word';
   text.innerText = task.text || '';
   header.appendChild(text);
 
+  // Контейнер для кнопок
+  const actionsContainer = document.createElement('div');
+  actionsContainer.className = 'task-actions';
+
+  // Кнопка "Изменить" (карандаш на листе, синяя)
+  const taskEdit = document.createElement('button');
+  taskEdit.className = 'task-edit';
+  taskEdit.type = 'button';
+  taskEdit.title = 'Изменить задачу';
+  taskEdit.setAttribute('aria-label', 'Изменить задачу');
+  taskEdit.draggable = false;
+  taskEdit.onclick = function(event) {
+    event.stopPropagation();
+    openEditTask(task.id);
+  };
+  // SVG иконка: карандаш на листе 14x14, цвет var(--tg-theme-button-color)
+  taskEdit.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.5 1.5l3 3L5 14H2v-3l9.5-9.5Z" stroke="var(--tg-theme-button-color)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 3l3 3" stroke="var(--tg-theme-button-color)" stroke-width="1.3" stroke-linecap="round"/></svg>';
+  actionsContainer.appendChild(taskEdit);
+
+  // Кнопка "Удалить" (корзина)
   const taskDelete = document.createElement('button');
   taskDelete.className = 'task-delete';
   taskDelete.type = 'button';
@@ -347,9 +367,11 @@ function createTaskCard(task) {
     event.stopPropagation();
     deleteTask(task.id, taskDelete);
   };
-  // SVG иконка корзины с крышкой 16x16, цвет #B85252
-  taskDelete.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 4h10l-.47 6.29A2 2 0 0 1 10.55 12H5.45a2 2 0 0 1-1.98-1.71L3 4Z" stroke="#B85252" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 4h13" stroke="#B85252" stroke-width="1.3" stroke-linecap="round"/><path d="M6.5 7.5v3" stroke="#B85252" stroke-width="1.3" stroke-linecap="round"/><path d="M9.5 7.5v3" stroke="#B85252" stroke-width="1.3" stroke-linecap="round"/><rect x="4.5" y="3" width="7" height="1.5" rx="0.5" stroke="#B85252" stroke-width="1.3" stroke-linecap="round"/></svg>';
-  header.appendChild(taskDelete);
+  // SVG иконка корзины с крышкой 16x14 (уже по оси X — ширина 14 вместо 16), цвет #B85252
+  taskDelete.innerHTML = '<svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 3.5h9l-.42 5.69A1.5 1.5 0 0 1 9.62 10H4.38a1.5 1.5 0 0 1-1.47-1.31L2.5 3.5Z" stroke="#B85252" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 3.5h11" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/><path d="M5.5 7v2.5" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/><path d="M8.5 7v2.5" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/><rect x="4" y="2.5" width="6" height="1.2" rx="0.4" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/></svg>';
+  actionsContainer.appendChild(taskDelete);
+
+  header.appendChild(actionsContainer);
   content.appendChild(header);
 
   // Метаданные
@@ -385,13 +407,13 @@ function createTaskCard(task) {
   content.appendChild(metaGroup);
   card.appendChild(content);
 
-  // Клик по карточке — редактирование
+  // Клик по карточке — открывает режим просмотра
   card.style.cursor = 'pointer';
   card.onclick = function(event) {
-    if (event.target.closest('.task-delete')) {
+    if (event.target.closest('.task-delete') || event.target.closest('.task-edit')) {
       return;
     }
-    openEditTask(task.id);
+    openViewTask(task.id);
   };
 
   return card;
@@ -613,6 +635,116 @@ function deleteTask(taskId, button) {
 function getNotesFromForm() {
   const notesInput = document.getElementById('form-notes');
   return notesInput ? notesInput.value.trim() : '';
+}
+
+// ============================================================
+// Справочник статусов и приоритетов
+// ============================================================
+const STATUS_LABELS = {
+  todo: 'Беклог',
+  progress: 'В работе',
+  blocked: 'Блок',
+  done: 'Выполнено',
+  cancelled: 'Отменено'
+};
+
+const PRIORITY_LABELS = {
+  low: 'Низкий',
+  medium: 'Средний',
+  high: 'Высокий',
+  critical: 'Критический'
+};
+
+// ============================================================
+// Просмотр задачи (режим чтения)
+// ============================================================
+let currentViewTaskId = null;
+
+function openViewTask(taskId) {
+  const task = tasks.find(function(t) {
+    return t.id === taskId;
+  });
+  if (!task) return;
+
+  currentViewTaskId = task.id;
+
+  // Заполняем текст
+  const viewText = document.getElementById('task-view-text');
+  if (viewText) viewText.innerText = task.text || '';
+
+  // Статус
+  const viewStatus = document.getElementById('task-view-status');
+  if (viewStatus) {
+    viewStatus.className = 'task-view-status-badge status-' + (task.status || 'todo');
+    viewStatus.innerText = STATUS_LABELS[task.status] || task.status;
+  }
+
+  // Приоритет
+  const viewPriority = document.getElementById('task-view-priority');
+  if (viewPriority) {
+    viewPriority.className = 'task-view-priority-badge priority-' + (task.priority || 'medium');
+    viewPriority.innerText = PRIORITY_LABELS[task.priority] || task.priority;
+  }
+
+  // Исполнитель
+  const viewExecutor = document.getElementById('task-view-executor');
+  if (viewExecutor) viewExecutor.innerText = task.executor || '—';
+
+  // Срок
+  const viewDeadline = document.getElementById('task-view-deadline');
+  if (viewDeadline) viewDeadline.innerText = formatDeadlineDisplay(task.deadline);
+
+  // Заметки
+  const viewNotesContainer = document.getElementById('task-view-notes-container');
+  const viewNotes = document.getElementById('task-view-notes');
+  const notes = task.notes || '';
+  if (viewNotes) viewNotes.innerText = notes;
+  if (viewNotesContainer) {
+    if (notes) {
+      viewNotesContainer.style.display = 'flex';
+    } else {
+      viewNotesContainer.style.display = 'none';
+    }
+  }
+
+  // Открываем модалку
+  const overlay = document.getElementById('task-view-overlay');
+  if (overlay) {
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+
+    if (tg && tg.BackButton) {
+      tg.BackButton.show();
+      tg.BackButton.onClick(closeViewTask);
+    }
+  }
+}
+
+function closeViewTask(event) {
+  if (event && event.target && event.target.id !== 'task-view-overlay' && !event.target.classList.contains('task-view-close')) {
+    return;
+  }
+
+  const overlay = document.getElementById('task-view-overlay');
+  if (!overlay) return;
+
+  overlay.classList.remove('is-open');
+  overlay.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('modal-open');
+  currentViewTaskId = null;
+
+  if (tg && tg.BackButton) {
+    tg.BackButton.hide();
+  }
+}
+
+function editFromView() {
+  if (!currentViewTaskId) return;
+  closeViewTask();
+  setTimeout(function() {
+    openEditTask(currentViewTaskId);
+  }, 200);
 }
 
 // ============================================================
