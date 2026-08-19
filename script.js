@@ -678,48 +678,77 @@ function saveTask() {
     return;
   }
 
-  const saveButton = document.querySelector('#task-form-overlay .modal-footer .btn-primary');
-  if (saveButton) {
-    saveButton.disabled = true;
-    saveButton.innerText = 'Сохраняем…';
-  }
-
   const isCreate = !editingTaskId;
 
-  try {
-    if (isCreate) {
-      saveNewTask(text, executor, deadline, status, priority, notes);
-    } else {
-      updateExistingTask(text, executor, deadline, status, priority, notes);
-    }
-  } finally {
-    if (saveButton) {
-      saveButton.disabled = false;
-      saveButton.innerText = 'Сохранить';
-    }
+  if (isCreate) {
+    saveNewTask(text, executor, deadline, status, priority, notes).catch(function(error) {
+      console.error('Ошибка создания задачи:', error);
+      if (tg && typeof tg.showAlert === 'function') {
+        tg.showAlert(error.message || 'Не удалось создать задачу.');
+      } else {
+        alert(error.message || 'Не удалось создать задачу.');
+      }
+    });
+  } else {
+    updateExistingTask(text, executor, deadline, status, priority, notes).catch(function(error) {
+      console.error('Ошибка обновления задачи:', error);
+      if (tg && typeof tg.showAlert === 'function') {
+        tg.showAlert(error.message || 'Не удалось обновить задачу.');
+      } else {
+        alert(error.message || 'Не удалось обновить задачу.');
+      }
+    });
   }
   exportToExcel();
 }
 
 async function saveNewTask(text, executor, deadline, status, priority, notes) {
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      initData: tg.initData,
-      action: 'create',
-      task: { text: text, executor: executor, deadline: deadline, status: status, priority: priority, notes: notes }
-    })
-  });
-
-  const result = await response.json();
-  if (!response.ok || !result.success) {
-    throw new Error(result.error || 'Не удалось создать задачу.');
-  }
-
-  tasks.push(result.task);
+  // Сразу добавляем задачу в локальный массив и закрываем модалку,
+  // чтобы пользователь не мог кликнуть "Сохранить" повторно
+  const tempTask = {
+    id: Date.now().toString(),
+    text: text,
+    executor: executor,
+    deadline: deadline,
+    status: status,
+    priority: priority,
+    notes: notes
+  };
+  tasks.push(tempTask);
   renderBoard();
   closeTaskForm();
+
+  try {
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        initData: tg.initData,
+        action: 'create',
+        task: { text: text, executor: executor, deadline: deadline, status: status, priority: priority, notes: notes }
+      })
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'Не удалось создать задачу.');
+    }
+
+    // Обновляем задачу на серверный id и данные
+    const taskIndex = tasks.findIndex(function(t) {
+      return t.id === tempTask.id;
+    });
+    if (taskIndex !== -1) {
+      tasks[taskIndex] = Object.assign({}, tasks[taskIndex], result.task);
+    }
+  } catch (error) {
+    // При ошибке удаляем неудачно созданную задачу
+    tasks = tasks.filter(function(t) {
+      return t.id !== tempTask.id;
+    });
+    renderBoard();
+    throw error;
+  }
   
   // Авто-синхронизация после создания задачи
   exportToExcel();
