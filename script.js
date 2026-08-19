@@ -599,11 +599,14 @@ function askForDeletion(callback) {
 }
 
 function deleteTask(taskId, button) {
+  var hadButton = !!button;
   askForDeletion(async function(confirmed) {
     if (!confirmed) return;
 
-    button.disabled = true;
-    button.innerText = '…';
+    if (hadButton) {
+      button.disabled = true;
+      button.innerText = '…';
+    }
 
     try {
       const response = await fetch(API_URL, {
@@ -622,8 +625,10 @@ function deleteTask(taskId, button) {
       });
       renderBoard();
     } catch (error) {
-      button.disabled = false;
-      button.innerText = '×';
+      if (hadButton) {
+        button.disabled = false;
+        button.innerText = '×';
+      }
       console.error('Ошибка удаления задачи:', error);
       if (tg && typeof tg.showAlert === 'function') {
         tg.showAlert(error.message || 'Не удалось удалить задачу.');
@@ -632,6 +637,13 @@ function deleteTask(taskId, button) {
       }
     }
   });
+}
+
+function deleteFromView() {
+  var taskId = currentViewTaskId;
+  if (!taskId) return;
+  closeViewTask();
+  deleteTask(taskId, null);
 }
 
 function getNotesFromForm() {
