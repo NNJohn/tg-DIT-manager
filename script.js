@@ -352,7 +352,7 @@ function createTaskCard(task) {
     event.stopPropagation();
     openEditTask(task.id);
   };
-  // SVG иконка: карандаш на листе 14x14, цвет var(--tg-theme-button-color)
+  // SVG иконка: карандаш на листе 16x16, цвет var(--tg-theme-button-color)
   taskEdit.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.5 1.5l3 3L5 14H2v-3l9.5-9.5Z" stroke="var(--tg-theme-button-color)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 3l3 3" stroke="var(--tg-theme-button-color)" stroke-width="1.3" stroke-linecap="round"/></svg>';
   actionsContainer.appendChild(taskEdit);
 
@@ -368,8 +368,9 @@ function createTaskCard(task) {
     deleteTask(task.id, taskDelete);
   };
   // SVG иконка корзины с крышкой 16x16, цвет #B85252
-  taskDelete.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><<path d="M2.5 3.5h11l-.7 8.5a1.5 1.5 0 0 1-1.5 1.5H4.7a1.5 1.5 0 0 1-1.5-1.5L2.5 3.5Z" stroke="#B85252" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 3.5h11" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/><path d="M5.5 7v2.5" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/><path d="M8.5 7v2.5" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/><rect x="4" y="2.5" width="6" height="1.2" rx="0.4" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/></svg>';
+  taskDelete.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 4h10M4.5 4v9.5a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4M6.5 1.5h3M6.5 7.5v4M9.5 7.5v4" stroke="#B85252" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   actionsContainer.appendChild(taskDelete);
+
 
   header.appendChild(actionsContainer);
   content.appendChild(header);
