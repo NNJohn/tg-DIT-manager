@@ -368,8 +368,9 @@ function createTaskCard(task) {
     deleteTask(task.id, taskDelete);
   };
   // SVG иконка корзины с крышкой 16x16, цвет #B85252
-  taskDelete.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 4h10M4.5 4v9.5a1 1 0 0 0 1 1h5a1 1 0 0 0 1-1V4M6.5 1.5h3M6.5 7.5v4M9.5 7.5v4" stroke="#B85252" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  taskDelete.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5h12M3.5 3.5v10a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-10M5.5 1.5h5M6.5 7v4.5M9.5 7v4.5" stroke="#B85252" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   actionsContainer.appendChild(taskDelete);
+
 
 
   header.appendChild(actionsContainer);
