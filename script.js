@@ -367,8 +367,8 @@ function createTaskCard(task) {
     event.stopPropagation();
     deleteTask(task.id, taskDelete);
   };
-  // SVG иконка корзины с крышкой 16x14 (уже по оси X — ширина 14 вместо 16), цвет #B85252
-  taskDelete.innerHTML = '<svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 3.5h9l-.42 5.69A1.5 1.5 0 0 1 9.62 10H4.38a1.5 1.5 0 0 1-1.47-1.31L2.5 3.5Z" stroke="#B85252" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 3.5h11" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/><path d="M5.5 7v2.5" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/><path d="M8.5 7v2.5" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/><rect x="4" y="2.5" width="6" height="1.2" rx="0.4" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/></svg>';
+  // SVG иконка корзины с крышкой 16x16, цвет #B85252
+  taskDelete.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><<path d="M2.5 3.5h11l-.7 8.5a1.5 1.5 0 0 1-1.5 1.5H4.7a1.5 1.5 0 0 1-1.5-1.5L2.5 3.5Z" stroke="#B85252" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.5 3.5h11" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/><path d="M5.5 7v2.5" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/><path d="M8.5 7v2.5" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/><rect x="4" y="2.5" width="6" height="1.2" rx="0.4" stroke="#B85252" stroke-width="1.2" stroke-linecap="round"/></svg>';
   actionsContainer.appendChild(taskDelete);
 
   header.appendChild(actionsContainer);
