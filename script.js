@@ -740,10 +740,11 @@ function closeViewTask(event) {
 }
 
 function editFromView() {
-  if (!currentViewTaskId) return;
+  var taskId = currentViewTaskId;
+  if (!taskId) return;
   closeViewTask();
   setTimeout(function() {
-    openEditTask(currentViewTaskId);
+    openEditTask(taskId);
   }, 200);
 }
 
