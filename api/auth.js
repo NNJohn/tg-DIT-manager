@@ -82,7 +82,12 @@ module.exports = async (req, res) => {
       const usersWhitelist = allowedUsers.map(allowedId => {
         const member = whitelistMembers.find(m => m.telegramId === String(allowedId));
         if (member) {
-          const name = [member.displayName || member.telegramFirstName, member.telegramLastName].filter(Boolean).join(' ');
+          // Если displayName уже установлен — используем его целиком (без добавления telegramLastName)
+          if (member.displayName) {
+            return member.displayName;
+          }
+          // Иначе собираем из Telegram-имени
+          const name = [member.telegramFirstName, member.telegramLastName].filter(Boolean).join(' ');
           return name || 'Сотрудник ' + allowedId;
         }
         return 'Сотрудник ' + allowedId;
