@@ -202,6 +202,38 @@
       display: none;
     }
 
+    .filter-wrapper {
+      position: relative;
+      min-width: 140px;
+      max-width: 200px;
+    }
+
+    #task-filter-executor {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+      font: inherit;
+      border: 1px solid var(--border-color);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      height: 32px;
+      box-sizing: border-box;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5' stroke='%238E94A0' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      padding-right: 24px;
+    }
+
+    #task-filter-executor:focus {
+      border-color: var(--tg-theme-button-color);
+      outline: none;
+    }
+
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
@@ -1141,6 +1173,9 @@
           Список
         </button>
       </div>
+      <div class="filter-wrapper">
+        <select id="task-filter-executor"></select>
+      </div>
       <button
         type="button"
         class="btn-primary"
@@ -1518,6 +1553,7 @@
         ======================================================== -->
 
   <script src="./script.js?v=20260819-1"></script>
+  <script src="./script.filter.js?v=1"></script>
 
 </body>
 </html>
