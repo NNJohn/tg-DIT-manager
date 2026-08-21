@@ -31,9 +31,9 @@
 
   // ============================================================
   // Установка списка пользователей (вызывается из основного скрипта)
+  // Формирует ТОТ ЖЕ список, что и populateExecutors в script.js
   // ============================================================
-  window.setFilterUsers = function(usersWhitelist) {
-    console.log('setFilterUsers вызван, usersWhitelist:', usersWhitelist);
+  window.setFilterUsers = function(usersWhitelist, currentUserName) {
     if (!usersWhitelist || !usersWhitelist.length) return;
     
     allUsersWhitelist = usersWhitelist;
@@ -44,16 +44,27 @@
       return;
     }
 
-    // Очищаем и добавляем "Все" + список
+    // Очищаем и добавляем "Все" + список (такой же как в форме)
     select.innerHTML = '<option value="">Все</option>';
+
+    // 1. Сначала текущего пользователя (как в форме)
+    var meOption = document.createElement('option');
+    meOption.value = currentUserName;
+    meOption.innerText = currentUserName + ' (Это вы)';
+    select.appendChild(meOption);
+
+    // 2. Остальных из whitelist, исключая текущего
     for (var i = 0; i < usersWhitelist.length; i++) {
+      if (String(usersWhitelist[i]).includes(currentUserName)) {
+        continue;
+      }
       var opt = document.createElement('option');
       opt.value = usersWhitelist[i];
       opt.innerText = usersWhitelist[i];
       select.appendChild(opt);
     }
+
     console.log('setFilterUsers заполнено опций:', select.options.length);
-    console.log('allUsersWhitelist:', allUsersWhitelist);
   };
 
   // ============================================================

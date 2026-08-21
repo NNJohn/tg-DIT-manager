@@ -237,12 +237,9 @@ async function authorize() {
     // Динамически строим список исполнителей на основе вайтлиста Vercel
     populateExecutors(result.usersWhitelist);
 
-    // Устанавливаем пользователей для фильтра
+    // Устанавливаем пользователей для фильтра (тот же список, что и в форме)
     if (typeof window.setFilterUsers === 'function') {
-      console.log('authorize: вызываю setFilterUsers с usersWhitelist:', result.usersWhitelist);
-      window.setFilterUsers(result.usersWhitelist);
-    } else {
-      console.error('authorize: setFilterUsers не найдена!');
+      window.setFilterUsers(result.usersWhitelist, currentUserName);
     }
 
     isDeveloper = Boolean(result.isDeveloper);
