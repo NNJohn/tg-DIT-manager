@@ -102,13 +102,8 @@ function showApp() {
 // Динамическое наполнение списка исполнителей из Вайтлиста
 // ============================================================
 function populateExecutors(usersWhitelist) {
-  console.log('DEBUG populateExecutors: начало');
   const selectEl = document.getElementById('form-executor');
-  console.log('DEBUG: form-executor found =', !!selectEl);
-  if (!selectEl) {
-    console.warn('DEBUG: form-executor не найден');
-    return;
-  }
+  if (!selectEl) return;
 
   // Очищаем старые опции и ставим базовый вариант
   selectEl.innerHTML = '<option value="">— Без исполнителя —</option>';
@@ -127,41 +122,6 @@ function populateExecutors(usersWhitelist) {
       if (String(userName).includes(currentUserName)) {
         return;
       }
-      
-      const option = document.createElement('option');
-      option.value = userName;
-      option.innerText = userName;
-      selectEl.appendChild(option);
-    });
-  }
-  console.log('DEBUG populateExecutors: готово, опций =', selectEl.options.length);
-}
-
-// ============================================================
-// Фильтрация задач по исполнителю
-// ============================================================
-function populateTaskFilter(usersWhitelist) {
-  console.log('DEBUG populateTaskFilter: начало');
-  const filterSelect = document.getElementById('task-filter-executor');
-  console.log('DEBUG: task-filter-executor found =', !!filterSelect);
-  if (!filterSelect) {
-    console.warn('DEBUG: task-filter-executor не найден');
-    return;
-  }
-
-  // Очищаем и ставим опцию "Все"
-  filterSelect.innerHTML = '<option value="">Все</option>';
-
-  if (usersWhitelist && Array.isArray(usersWhitelist)) {
-    usersWhitelist.forEach(function(userName) {
-      const option = document.createElement('option');
-      option.value = userName;
-      option.innerText = userName;
-      filterSelect.appendChild(option);
-    });
-  }
-  console.log('DEBUG populateTaskFilter: готово, опций =', filterSelect.options.length);
-}
       
       const option = document.createElement('option');
       option.value = userName;
@@ -276,14 +236,10 @@ async function authorize() {
     tasks = result.tasks || [];
 
     // Динамически строим список исполнителей на основе вайтлиста Vercel
-    try {
-      console.log('DEBUG: usersWhitelist =', result.usersWhitelist);
-      populateExecutors(result.usersWhitelist);
-      populateTaskFilter(result.usersWhitelist);
-      console.log('DEBUG: фильтры заполнены успешно');
-    } catch (e) {
-      console.error('DEBUG: ошибка заполнения фильтров:', e);
-    }
+    populateExecutors(result.usersWhitelist);
+
+    // Заполняем фильтр по исполнителям
+    populateTaskFilter(result.usersWhitelist);
 
     isDeveloper = Boolean(result.isDeveloper);
     if (isDeveloper) {
