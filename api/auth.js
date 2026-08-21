@@ -198,7 +198,8 @@ module.exports = async (req, res) => {
     // Sync: Google Sheets
     // ============================================================
     if (req.method === 'POST' && req.body.action === 'sync_google') {
-      return await syncGoogle(db, null, realName);
+      const result = await syncGoogle(db, null, realName);
+      return res.status(200).json(result);
     }
 
     return res.status(400).json({ error: 'Некорректный метод или действие.' });
