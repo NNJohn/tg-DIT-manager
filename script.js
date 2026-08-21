@@ -6,25 +6,18 @@ const API_URL = '/api/auth';
 // Утилита логирования на экран (для отладки в Mini App)
 // ============================================================
 function debugLog(msg) {
-  try {
-    const el = document.getElementById('debug-log');
-    if (!el) return;
-    if (el.style.display === 'none') el.style.display = 'block';
-    const time = new Date().toLocaleTimeString('ru-RU');
-    const line = document.createElement('div');
-    line.style.marginBottom = '4px';
-    line.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-    line.innerHTML = '<span style="color:#565D68">[' + time + ']</span> ' + msg;
-    el.appendChild(line);
-    el.scrollTop = el.scrollHeight;
-  } catch(e) {
-    // Игнорируем ошибки инициализации
-  }
+  const el = document.getElementById('debug-log');
+  if (!el) return;
+  if (el.style.display === 'none') el.style.display = 'block';
+  const time = new Date().toLocaleTimeString('ru-RU');
+  const line = document.createElement('div');
+  line.style.marginBottom = '4px';
+  line.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+  line.innerHTML = '<span style="color:#565D68">[' + time + ']</span> ' + msg;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
 }
-setTimeout(function() { debugLog('DEBUG-режим активирован'); }, 0);
-
-// Тест: проверяем выполнение скрипта
-alert('SCRIPT LOADED OK');
+debugLog('DEBUG-режим активирован');
 
 let tasks = [];
 let currentUserName = 'Пользователь';
