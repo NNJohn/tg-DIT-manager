@@ -1,24 +1,6 @@
 // Pocket Jira — Telegram Mini App Logic
 // ============================================================
 const API_URL = '/api/auth';
-
-// ============================================================
-// Утилита логирования на экран (для отладки в Mini App)
-// ============================================================
-function debugLog(msg) {
-  const el = document.getElementById('debug-log');
-  if (!el) return;
-  if (el.style.display === 'none') el.style.display = 'block';
-  const time = new Date().toLocaleTimeString('ru-RU');
-  const line = document.createElement('div');
-  line.style.marginBottom = '4px';
-  line.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
-  line.innerHTML = '<span style="color:#565D68">[' + time + ']</span> ' + msg;
-  el.appendChild(line);
-  el.scrollTop = el.scrollHeight;
-}
-debugLog('DEBUG-режим активирован');
-
 let tasks = [];
 let currentUserName = 'Пользователь';
 let isDeveloper = false;
@@ -120,47 +102,13 @@ function showApp() {
 // Динамическое наполнение списка исполнителей из Вайтлиста
 // ============================================================
 function populateExecutors(usersWhitelist) {
+  console.log('DEBUG populateExecutors: начало');
   const selectEl = document.getElementById('form-executor');
-  if (!selectEl) return;
-
-  // Очищаем старые опции и ставим базовый вариант
-  selectEl.innerHTML = '<option value="">— Без исполнителя —</option>';
-
-  // 1. Первой строчкой всегда добавляем текущую сессию пользователя (Вас)
-  const meOption = document.createElement('option');
-  meOption.value = currentUserName;
-  meOption.innerText = currentUserName + " (Это вы)";
-  selectEl.appendChild(meOption);
-
-  // 2. Следом добавляем остальных участников из вайтлиста бэкенда
-  if (usersWhitelist && Array.isArray(usersWhitelist)) {
-    usersWhitelist.forEach(function(userName) {
-      if (String(userName).includes(currentUserName)) {
-        return;
-      }
-      const option = document.createElement('option');
-      option.value = userName;
-      option.innerText = userName;
-      selectEl.appendChild(option);
-    });
+  console.log('DEBUG: form-executor found =', !!selectEl);
+  if (!selectEl) {
+    console.warn('DEBUG: form-executor не найден');
+    return;
   }
-}
-
-function populateTaskFilter(usersWhitelist) {
-  const filterSelect = document.getElementById('task-filter-executor');
-  if (!filterSelect) return;
-
-  filterSelect.innerHTML = '<option value="">Все</option>';
-
-  if (usersWhitelist && Array.isArray(usersWhitelist)) {
-    usersWhitelist.forEach(function(userName) {
-      const option = document.createElement('option');
-      option.value = userName;
-      option.innerText = userName;
-      filterSelect.appendChild(option);
-    });
-  }
-}
 
   // Очищаем старые опции и ставим базовый вариант
   selectEl.innerHTML = '<option value="">— Без исполнителя —</option>';
@@ -270,9 +218,9 @@ function getTelegramUser() {
 // Авторизация и получение данных
 // ============================================================
 async function authorize() {
-  debugLog('authorize() START');
+  console.log('authorize() START');
   if (!tg) {
-    debugLog('ERROR: tg is null');
+    console.error('authorize(): tg is null');
     showError(
       'Telegram не найден',
       'Приложение должно быть открыто внутри Telegram.'
@@ -280,7 +228,7 @@ async function authorize() {
     return false;
   }
   if (!tg.initData) {
-    debugLog('ERROR: tg.initData is null');
+    console.error('authorize(): tg.initData is null');
     showError(
       'Нет данных Telegram',
       'Telegram не передал данные авторизации.'
@@ -288,7 +236,7 @@ async function authorize() {
     return false;
   }
 
-  debugLog('Отправка запроса к API...');
+  console.log('authorize(): запрос к API...');
   const statusTitle = document.getElementById('status-title');
   const statusDesc = document.getElementById('status-desc');
   if (statusTitle) statusTitle.innerText = 'Проверка прав доступа...';
@@ -302,25 +250,25 @@ async function authorize() {
       },
       body: JSON.stringify({
         initData: tg.initData,
-        action: 'login'
+        action: 'login' // Сообщаем бэкенду, что это стартовый вход
       })
     });
 
-    debugLog('HTTP ' + response.status);
+    console.log('authorize(): HTTP', response.status);
     const responseText = await response.text();
-    
+    console.log('authorize(): responseText (первые 500 символов):', responseText.substring(0, 500));
     let result;
     try {
       result = JSON.parse(responseText);
     } catch (e) {
-      debugLog('ERROR: JSON parse failed — ' + e.message);
       throw new Error(
         'Сервер вернул некорректный ответ. HTTP ' + response.status
       );
     }
 
-    if (!result.success) {
-      debugLog('ERROR: ' + (result.error || 'не success'));
+    console.log('authorize(): parsed result.success =', result.success);
+    if (!response.ok || !result.success) {
+      console.error('authorize(): ошибка ответа:', result.error);
       showError(
         'Доступ ограничен',
         result.error || 'Ваш Telegram ID отсутствует в белом списке.'
@@ -328,7 +276,6 @@ async function authorize() {
       return false;
     }
 
-    debugLog('Успешно! tasks=' + (result.tasks || []).length + ' userName=' + (result.userName || ''));
     if (result.userName) {
       currentUserName = result.userName;
     }
@@ -336,15 +283,14 @@ async function authorize() {
     // Сохраняем полученные из MongoDB задачи в локальный массив
     tasks = result.tasks || [];
 
-    // Заполняем списки исполнителей
+    // Динамически строим список исполнителей на основе вайтлиста Vercel
     try {
-      const wl = result.usersWhitelist || [];
-      debugLog('usersWhitelist: ' + wl.length + ' шт');
-      populateExecutors(wl);
-      populateTaskFilter(wl);
-      debugLog('Фильтры заполнены');
+      console.log('DEBUG: usersWhitelist =', result.usersWhitelist);
+      populateExecutors(result.usersWhitelist);
+      populateTaskFilter(result.usersWhitelist);
+      console.log('DEBUG: фильтры заполнены успешно');
     } catch (e) {
-      debugLog('ERROR populate: ' + e.message);
+      console.error('DEBUG: ошибка заполнения фильтров:', e);
     }
 
     isDeveloper = Boolean(result.isDeveloper);
@@ -357,8 +303,6 @@ async function authorize() {
     renderBoard();
     showApp();
     switchView(currentView);
-    
-    debugLog('Готово!');
     
     return true;
   } catch (error) {
@@ -1437,9 +1381,8 @@ async function autoSyncOnStart() {
 // Точка входа Инициализации
 // ============================================================
 async function initApplication() {
-  debugLog('initApplication() START');
+  console.log('Pocket Jira: initApplication() START');
   if (!tg) {
-    debugLog('ERROR: tg is null');
     showError(
       'Откройте приложение в Telegram',
       'Pocket Jira должен запускаться через Telegram Mini App.'
@@ -1447,7 +1390,7 @@ async function initApplication() {
     return;
   }
 
-  debugLog('Telegram найден');
+  console.log('Pocket Jira: Telegram найден, применяем тему');
   applyTelegramTheme();
   switchView(currentView);
 
@@ -1457,23 +1400,29 @@ async function initApplication() {
       telegramUser.first_name ||
       telegramUser.username ||
       'Пользователь';
-    debugLog('currentUserName = ' + currentUserName);
+    console.log('Pocket Jira: currentUserName =', currentUserName);
   }
 
+  console.log('Pocket Jira: начинаем authorize()');
   try {
     const authorized = await authorize();
     if (!authorized) {
-      debugLog('ERROR: authorize вернул false');
+      console.error('Pocket Jira: authorize() вернул false');
       return;
     }
-    debugLog('authorize успешен — показываем приложение');
+    console.log('Pocket Jira: authorize() успешен');
   } catch (authErr) {
-    debugLog('ERROR: authorize: ' + authErr.message);
+    console.error('Pocket Jira: authorize() бросил исключение:', authErr);
     showError(
       'Ошибка авторизации',
       authErr.message || 'Не удалось выполнить авторизацию.'
     );
+    return;
   }
+  
+  console.log('Pocket Jira: начинаем autoSyncOnStart()');
+  autoSyncOnStart();
+  console.log('Pocket Jira: initApplication() DONE');
 }
 
 initApplication();
