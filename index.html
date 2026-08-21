@@ -202,32 +202,6 @@
       display: none;
     }
 
-    #task-filter-executor {
-      width: 100%;
-      padding: 6px 8px;
-      border-radius: var(--radius-sm);
-      background: var(--tg-theme-bg-color);
-      color: var(--tg-theme-text-color);
-      font: inherit;
-      border: 1px solid var(--border-color);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      height: 32px;
-      box-sizing: border-box;
-    }
-
-    #task-filter-executor:focus {
-      border-color: var(--tg-theme-button-color);
-      outline: none;
-    }
-
-    @media (max-width: 360px) {
-      #task-filter-executor {
-        min-width: 120px;
-      }
-    }
-
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
@@ -987,10 +961,6 @@
       border: 1px solid var(--border-color);
     }
 
-    .field-group select {
-      cursor: pointer;
-    }
-
     .field-group textarea {
       min-height: 120px;
       max-height: 280px;
@@ -1170,11 +1140,6 @@
         >
           Список
         </button>
-      </div>
-      <div class="field-group" style="position: relative; min-width: 160px;">
-        <select id="task-filter-executor" onchange="applyTaskFilter()">
-          <option value="">Все</option>
-        </select>
       </div>
       <button
         type="button"

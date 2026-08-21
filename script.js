@@ -7,7 +7,6 @@ let isDeveloper = false;
 let deadlineMode = 'date';
 let editingTaskId = null;
 let currentView = localStorage.getItem('viewMode') || 'board';
-let taskFilterExecutor = '';
 // Если сохранён 'list', сбросим на 'board' — доска всегда основная
 if (currentView === 'list') {
   currentView = 'board';
@@ -238,9 +237,6 @@ async function authorize() {
     // Динамически строим список исполнителей на основе вайтлиста Vercel
     populateExecutors(result.usersWhitelist);
 
-    // Заполняем фильтр по исполнителям
-    populateTaskFilter(result.usersWhitelist);
-
     isDeveloper = Boolean(result.isDeveloper);
     if (isDeveloper) {
       document.getElementById('devtools').hidden = false;
@@ -264,48 +260,6 @@ async function authorize() {
 }
 
 // ============================================================
-// Фильтрация задач по исполнителю
-// ============================================================
-function populateTaskFilter(usersWhitelist) {
-  const filterSelect = document.getElementById('task-filter-executor');
-  if (!filterSelect) return;
-
-  // Очищаем и ставим опцию "Все"
-  filterSelect.innerHTML = '<option value="">Все</option>';
-
-  if (usersWhitelist && Array.isArray(usersWhitelist)) {
-    usersWhitelist.forEach(function(userName) {
-      const option = document.createElement('option');
-      option.value = userName;
-      option.innerText = userName;
-      filterSelect.appendChild(option);
-    });
-  }
-}
-
-function applyTaskFilter() {
-  const filterSelect = document.getElementById('task-filter-executor');
-  if (!filterSelect) return;
-  taskFilterExecutor = filterSelect.value;
-
-  // Перерендериваем текущий вид
-  if (currentView === 'list') {
-    renderListView();
-  } else {
-    renderBoard();
-  }
-}
-
-function getFilteredTasks() {
-  if (!taskFilterExecutor) {
-    return tasks;
-  }
-  return tasks.filter(function(task) {
-    return task.executor === taskFilterExecutor;
-  });
-}
-
-// ============================================================
 // Отрисовка Канбан-доски
 // ============================================================
 function renderBoard() {
@@ -317,9 +271,7 @@ function renderBoard() {
     cancelled: []
   };
 
-  const filteredTasks = getFilteredTasks();
-
-  filteredTasks.forEach(function(task) {
+  tasks.forEach(function(task) {
     if (columns[task.status]) {
       columns[task.status].push(task);
     }
@@ -351,49 +303,6 @@ function renderBoard() {
   if (currentView === 'list') {
     renderListView();
   }
-}
-
-// ============================================================
-// Отрисовка списка задач (без разделения по статусам)
-// ============================================================
-function renderListView() {
-  const listView = document.getElementById('list-view');
-  if (!listView) return;
-
-  listView.innerHTML = '';
-
-  const filteredTasks = getFilteredTasks();
-
-  if (filteredTasks.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'list-empty';
-    empty.innerHTML = `
-      <div class="list-empty-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
-          <rect x="9" y="3" width="6" height="4" rx="1"/>
-          <line x1="9" y1="12" x2="15" y2="12"/>
-          <line x1="9" y1="16" x2="13" y2="16"/>
-        </svg>
-      </div>
-      <div class="list-empty-text">Задач пока нет</div>
-      <div class="list-empty-subtext">Нажмите "+Задача" чтобы добавить первую</div>
-    `;
-    listView.appendChild(empty);
-    return;
-  }
-
-  // Сортируем: сначала Беклог, потом В работе, Блок, Выполнено, Отменено
-  const statusOrder = { todo: 0, progress: 1, blocked: 2, done: 3, cancelled: 4 };
-  const sortedTasks = [...filteredTasks].sort(function(a, b) {
-    return (statusOrder[a.status] || 99) - (statusOrder[b.status] || 99);
-  });
-
-  sortedTasks.forEach(function(task) {
-    const card = createTaskCard(task);
-    listView.appendChild(card);
-  });
-}
 }
 
 // ============================================================
