@@ -218,7 +218,9 @@ function getTelegramUser() {
 // Авторизация и получение данных
 // ============================================================
 async function authorize() {
+  console.log('authorize() START');
   if (!tg) {
+    console.error('authorize(): tg is null');
     showError(
       'Telegram не найден',
       'Приложение должно быть открыто внутри Telegram.'
@@ -226,6 +228,7 @@ async function authorize() {
     return false;
   }
   if (!tg.initData) {
+    console.error('authorize(): tg.initData is null');
     showError(
       'Нет данных Telegram',
       'Telegram не передал данные авторизации.'
@@ -233,6 +236,7 @@ async function authorize() {
     return false;
   }
 
+  console.log('authorize(): запрос к API...');
   const statusTitle = document.getElementById('status-title');
   const statusDesc = document.getElementById('status-desc');
   if (statusTitle) statusTitle.innerText = 'Проверка прав доступа...';
@@ -250,7 +254,9 @@ async function authorize() {
       })
     });
 
+    console.log('authorize(): HTTP', response.status);
     const responseText = await response.text();
+    console.log('authorize(): responseText (первые 500 символов):', responseText.substring(0, 500));
     let result;
     try {
       result = JSON.parse(responseText);
@@ -260,7 +266,9 @@ async function authorize() {
       );
     }
 
+    console.log('authorize(): parsed result.success =', result.success);
     if (!response.ok || !result.success) {
+      console.error('authorize(): ошибка ответа:', result.error);
       showError(
         'Доступ ограничен',
         result.error || 'Ваш Telegram ID отсутствует в белом списке.'
@@ -1373,7 +1381,7 @@ async function autoSyncOnStart() {
 // Точка входа Инициализации
 // ============================================================
 async function initApplication() {
-  console.log('Pocket Jira: initApplication()');
+  console.log('Pocket Jira: initApplication() START');
   if (!tg) {
     showError(
       'Откройте приложение в Telegram',
@@ -1382,6 +1390,7 @@ async function initApplication() {
     return;
   }
 
+  console.log('Pocket Jira: Telegram найден, применяем тему');
   applyTelegramTheme();
   switchView(currentView);
 
@@ -1391,13 +1400,29 @@ async function initApplication() {
       telegramUser.first_name ||
       telegramUser.username ||
       'Пользователь';
+    console.log('Pocket Jira: currentUserName =', currentUserName);
   }
 
-  // Запуск процесса авторизации и загрузки базы данных
-  await authorize();
+  console.log('Pocket Jira: начинаем authorize()');
+  try {
+    const authorized = await authorize();
+    if (!authorized) {
+      console.error('Pocket Jira: authorize() вернул false');
+      return;
+    }
+    console.log('Pocket Jira: authorize() успешен');
+  } catch (authErr) {
+    console.error('Pocket Jira: authorize() бросил исключение:', authErr);
+    showError(
+      'Ошибка авторизации',
+      authErr.message || 'Не удалось выполнить авторизацию.'
+    );
+    return;
+  }
   
-  // Автоматическая синхронизация после загрузки
+  console.log('Pocket Jira: начинаем autoSyncOnStart()');
   autoSyncOnStart();
+  console.log('Pocket Jira: initApplication() DONE');
 }
 
 initApplication();
