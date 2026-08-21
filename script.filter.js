@@ -53,9 +53,10 @@
     meOption.innerText = currentUserName + ' (Это вы)';
     select.appendChild(meOption);
 
-    // 2. Остальных из whitelist, исключая текущего
+    // 2. Остальных из whitelist
     for (var i = 0; i < usersWhitelist.length; i++) {
-      if (String(usersWhitelist[i]).includes(currentUserName)) {
+      // Пропускаем ТОЛЬКО если имя точно совпадает с текущим (не includes!)
+      if (String(usersWhitelist[i]) === currentUserName) {
         continue;
       }
       var opt = document.createElement('option');
@@ -64,7 +65,7 @@
       select.appendChild(opt);
     }
 
-    console.log('setFilterUsers заполнено опций:', select.options.length);
+    console.log('setFilterUsers: опций', select.options.length);
   };
 
   // ============================================================

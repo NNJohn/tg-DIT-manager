@@ -113,21 +113,21 @@ function populateExecutors(usersWhitelist) {
   meOption.innerText = currentUserName + " (Это вы)";
   selectEl.appendChild(meOption);
 
-  // 2. Следом добавляем остальных участников из вайтлиста бэкенда
-  //    Бэкенд уже подставляет читаемые имена, поэтому используем значения напрямую
-  if (usersWhitelist && Array.isArray(usersWhitelist)) {
-    usersWhitelist.forEach(function(userName) {
-      // Исключаем текущее пользователя (отображается первым)
-      if (String(userName).includes(currentUserName)) {
-        return;
-      }
-      
-      const option = document.createElement('option');
-      option.value = userName;
-      option.innerText = userName;
-      selectEl.appendChild(option);
-    });
-  }
+    // 2. Следом добавляем остальных участников из вайтлиста бэкенда
+    //    Бэкенд уже подставляет читаемые имена, поэтому используем значения напрямую
+    if (usersWhitelist && Array.isArray(usersWhitelist)) {
+      usersWhitelist.forEach(function(userName) {
+        // Исключаем ТОЛЬКО если имя точно совпадает (не includes!)
+        if (String(userName) === currentUserName) {
+          return;
+        }
+        
+        const option = document.createElement('option');
+        option.value = userName;
+        option.innerText = userName;
+        selectEl.appendChild(option);
+      });
+    }
 }
 
 // ============================================================
