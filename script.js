@@ -239,7 +239,10 @@ async function authorize() {
 
     // Устанавливаем пользователей для фильтра
     if (typeof window.setFilterUsers === 'function') {
+      console.log('authorize: вызываю setFilterUsers с usersWhitelist:', result.usersWhitelist);
       window.setFilterUsers(result.usersWhitelist);
+    } else {
+      console.error('authorize: setFilterUsers не найдена!');
     }
 
     isDeveloper = Boolean(result.isDeveloper);

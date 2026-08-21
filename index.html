@@ -234,6 +234,21 @@
       outline: none;
     }
 
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 0 2px;
+    }
+
+    .filter-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--tg-theme-hint-color);
+      margin-right: 8px;
+      white-space: nowrap;
+    }
+
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
@@ -1173,9 +1188,6 @@
           Список
         </button>
       </div>
-      <div class="filter-wrapper">
-        <select id="task-filter-executor"></select>
-      </div>
       <button
         type="button"
         class="btn-primary"
@@ -1197,6 +1209,13 @@
         </span>
       </button>
     </header>
+
+    <div class="filter-bar">
+      <div class="filter-wrapper">
+        <span class="filter-label">Фильтр по исполнителю</span>
+        <select id="task-filter-executor"></select>
+      </div>
+    </div>
 
 
     <!-- ======================================================

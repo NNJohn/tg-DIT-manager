@@ -33,12 +33,16 @@
   // Установка списка пользователей (вызывается из основного скрипта)
   // ============================================================
   window.setFilterUsers = function(usersWhitelist) {
+    console.log('setFilterUsers вызван, usersWhitelist:', usersWhitelist);
     if (!usersWhitelist || !usersWhitelist.length) return;
     
     allUsersWhitelist = usersWhitelist;
 
     var select = document.getElementById('task-filter-executor');
-    if (!select) return;
+    if (!select) {
+      console.warn('task-filter-executor не найден в DOM');
+      return;
+    }
 
     // Очищаем и добавляем "Все" + список
     select.innerHTML = '<option value="">Все</option>';
@@ -48,6 +52,8 @@
       opt.innerText = usersWhitelist[i];
       select.appendChild(opt);
     }
+    console.log('setFilterUsers заполнено опций:', select.options.length);
+    console.log('allUsersWhitelist:', allUsersWhitelist);
   };
 
   // ============================================================
